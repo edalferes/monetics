@@ -8,11 +8,10 @@ import (
 
 // CreateAccountRequest represents the request to create an account
 type CreateAccountRequest struct {
-	Name           string  `json:"name" validate:"required"`
-	Type           string  `json:"type" validate:"required,oneof=checking savings credit cash investment"`
-	InitialBalance float64 `json:"initial_balance"`
-	Currency       string  `json:"currency"`
-	Description    string  `json:"description"`
+	Name        string `json:"name" validate:"required"`
+	Type        string `json:"type" validate:"required,oneof=checking savings credit_card cash investment"`
+	Currency    string `json:"currency"`
+	Description string `json:"description"`
 }
 
 // AccountResponse represents an account in API responses
@@ -57,7 +56,7 @@ func ToAccountResponseList(accounts []domain.Account) []AccountResponse {
 // UpdateAccountRequest represents the request to update an account
 type UpdateAccountRequest struct {
 	Name        *string `json:"name" validate:"omitempty,min=3,max=100"`
-	Type        *string `json:"type" validate:"omitempty,oneof=checking savings credit cash invest"`
+	Type        *string `json:"type" validate:"omitempty,oneof=checking savings credit_card cash investment"`
 	Currency    *string `json:"currency" validate:"omitempty,len=3"`
 	Description *string `json:"description" validate:"omitempty,max=500"`
 }

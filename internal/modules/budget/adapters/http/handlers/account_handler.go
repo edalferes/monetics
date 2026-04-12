@@ -83,17 +83,16 @@ func (h *AccountHandler) CreateAccount(c echo.Context) error {
 	}
 
 	input := account.CreateInput{
-		UserID:         userID,
-		Name:           req.Name,
-		Type:           domain.AccountType(req.Type),
-		InitialBalance: req.InitialBalance,
-		Currency:       req.Currency,
-		Description:    req.Description,
+		UserID:      userID,
+		Name:        req.Name,
+		Type:        domain.AccountType(req.Type),
+		Currency:    req.Currency,
+		Description: req.Description,
 	}
 
 	acc, err := h.createAccountUseCase.Execute(c.Request().Context(), input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -118,7 +117,7 @@ func (h *AccountHandler) ListAccounts(c echo.Context) error {
 
 	accounts, err := h.listAccountsUseCase.Execute(c.Request().Context(), userID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -253,7 +252,7 @@ func (h *AccountHandler) UpdateAccount(c echo.Context) error {
 
 	acc, err := h.updateAccountUseCase.Execute(c.Request().Context(), input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -287,7 +286,7 @@ func (h *AccountHandler) DeleteAccount(c echo.Context) error {
 
 	err = h.deleteAccountUseCase.Execute(c.Request().Context(), userID, uint(accountID))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}

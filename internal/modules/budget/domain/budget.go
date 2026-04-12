@@ -6,6 +6,8 @@ import "time"
 type BudgetPeriod string
 
 const (
+	BudgetPeriodDaily     BudgetPeriod = "daily"     // Diário
+	BudgetPeriodWeekly    BudgetPeriod = "weekly"    // Semanal
 	BudgetPeriodMonthly   BudgetPeriod = "monthly"   // Mensal
 	BudgetPeriodQuarterly BudgetPeriod = "quarterly" // Trimestral
 	BudgetPeriodYearly    BudgetPeriod = "yearly"    // Annual

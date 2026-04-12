@@ -27,6 +27,7 @@ type UpdateUseCase struct {
 	transactionRepo interfaces.TransactionRepository
 	accountRepo     interfaces.AccountRepository
 	categoryRepo    interfaces.CategoryRepository
+	budgetRepo      interfaces.BudgetRepository
 	logger          logger.Logger
 }
 
@@ -35,12 +36,14 @@ func NewUpdateUseCase(
 	transactionRepo interfaces.TransactionRepository,
 	accountRepo interfaces.AccountRepository,
 	categoryRepo interfaces.CategoryRepository,
+	budgetRepo interfaces.BudgetRepository,
 	log logger.Logger,
 ) *UpdateUseCase {
 	return &UpdateUseCase{
 		transactionRepo: transactionRepo,
 		accountRepo:     accountRepo,
 		categoryRepo:    categoryRepo,
+		budgetRepo:      budgetRepo,
 		logger:          log.With().Str("usecase", "transaction.update").Logger(),
 	}
 }
@@ -126,9 +129,17 @@ func (uc *UpdateUseCase) Execute(ctx context.Context, input UpdateInput) (domain
 		parsedDate, err := time.Parse(time.RFC3339, *input.Date)
 		if err != nil {
 			uc.logger.Error().Err(err).Str("date", *input.Date).Msg("invalid date format")
-			return domain.Transaction{}, errors.ErrInvalidTransactionType // Reusing this error or create a new one
+			return domain.Transaction{}, errors.ErrInvalidDate
 		}
 		tx.Date = parsedDate
+		tx.Month = parsedDate.Format("2006-01")
+	}
+
+	// Track categories that need budget recalculation
+	oldCategoryID := tx.CategoryID
+	affectedCategories := map[uint]bool{oldCategoryID: true}
+	if input.CategoryID != nil && *input.CategoryID != oldCategoryID {
+		affectedCategories[*input.CategoryID] = true
 	}
 
 	updatedTx, err := uc.transactionRepo.Update(ctx, tx)
@@ -137,6 +148,29 @@ func (uc *UpdateUseCase) Execute(ctx context.Context, input UpdateInput) (domain
 		return domain.Transaction{}, err
 	}
 
+	// Recalculate budget spent for affected categories
+	for categoryID := range affectedCategories {
+		uc.recalculateBudgetSpent(ctx, input.UserID, categoryID, updatedTx.Date)
+	}
+
 	uc.logger.Info().Uint("transaction_id", input.ID).Msg("transaction updated successfully")
 	return updatedTx, nil
+}
+
+// recalculateBudgetSpent atomically recalculates spent for budgets matching the category
+func (uc *UpdateUseCase) recalculateBudgetSpent(ctx context.Context, userID, categoryID uint, txDate time.Time) {
+	budgets, err := uc.budgetRepo.GetByUserID(ctx, userID)
+	if err != nil {
+		uc.logger.Error().Err(err).Uint("user_id", userID).Msg("failed to get budgets for spent recalculation")
+		return
+	}
+
+	for _, b := range budgets {
+		if b.CategoryID == categoryID && b.IsActive &&
+			!txDate.Before(b.StartDate) && !txDate.After(b.EndDate) {
+			if err := uc.budgetRepo.UpdateSpentAtomic(ctx, b.ID, categoryID, b.StartDate, b.EndDate); err != nil {
+				uc.logger.Error().Err(err).Uint("budget_id", b.ID).Msg("failed to recalculate budget spent")
+			}
+		}
+	}
 }

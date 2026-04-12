@@ -90,7 +90,7 @@ func (h *BudgetHandler) CreateBudget(c echo.Context) error {
 
 	budgetResult, err := h.createBudgetUseCase.Execute(c.Request().Context(), input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -116,7 +116,7 @@ func (h *BudgetHandler) ListBudgets(c echo.Context) error {
 	// TODO: Implement active_only filter if needed
 	budgets, err := h.listBudgetsUseCase.Execute(c.Request().Context(), userID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -150,7 +150,7 @@ func (h *BudgetHandler) GetBudgetByID(c echo.Context) error {
 
 	budget, err := h.getBudgetByIDUseCase.Execute(c.Request().Context(), userID, uint(budgetID))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -211,7 +211,7 @@ func (h *BudgetHandler) UpdateBudget(c echo.Context) error {
 
 	budget, err := h.updateBudgetUseCase.Execute(c.Request().Context(), input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -245,7 +245,7 @@ func (h *BudgetHandler) DeleteBudget(c echo.Context) error {
 
 	err = h.deleteBudgetUseCase.Execute(c.Request().Context(), userID, uint(budgetID))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}

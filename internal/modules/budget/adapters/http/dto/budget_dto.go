@@ -11,7 +11,7 @@ type CreateBudgetRequest struct {
 	CategoryID  uint      `json:"category_id" validate:"required"`
 	Name        string    `json:"name" validate:"required"`
 	Amount      float64   `json:"amount" validate:"required,gt=0"`
-	Period      string    `json:"period" validate:"required,oneof=monthly quarterly yearly custom"`
+	Period      string    `json:"period" validate:"required,oneof=daily weekly monthly quarterly yearly custom"`
 	StartDate   time.Time `json:"start_date" validate:"required"`
 	EndDate     time.Time `json:"end_date" validate:"required"`
 	AlertAt     *float64  `json:"alert_at"`
@@ -77,7 +77,7 @@ func ToBudgetResponseList(budgets []domain.Budget) []BudgetResponse {
 type UpdateBudgetRequest struct {
 	Name        *string    `json:"name" validate:"omitempty,min=3,max=100"`
 	Amount      *float64   `json:"amount" validate:"omitempty,gt=0"`
-	Period      *string    `json:"period" validate:"omitempty,oneof=monthly quarterly yearly custom"`
+	Period      *string    `json:"period" validate:"omitempty,oneof=daily weekly monthly quarterly yearly custom"`
 	StartDate   *time.Time `json:"start_date"`
 	EndDate     *time.Time `json:"end_date"`
 	AlertAt     *float64   `json:"alert_at" validate:"omitempty,gte=0,lte=100"`

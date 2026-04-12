@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/edalferes/monetics/internal/modules/budget/usecase/interfaces"
 	"github.com/edalferes/monetics/internal/modules/budget/domain"
+	"github.com/edalferes/monetics/internal/modules/budget/usecase/interfaces"
 )
 
 // GetMonthlyReportUseCase generates monthly financial report
@@ -92,6 +92,11 @@ func (uc *GetMonthlyReportUseCase) Execute(ctx context.Context, userID uint, yea
 					CategoryType: categoryType,
 					Amount:       tx.Amount,
 				}
+			}
+		case domain.TransactionTypeTransfer:
+			// Transfer fees count as expense
+			if tx.TransferFee != nil && *tx.TransferFee > 0 {
+				totalExpense += *tx.TransferFee
 			}
 		}
 	}

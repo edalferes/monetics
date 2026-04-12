@@ -87,7 +87,7 @@ func (h *CategoryHandler) CreateCategory(c echo.Context) error {
 
 	categoryResult, err := h.createCategoryUseCase.Execute(c.Request().Context(), input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -110,24 +110,18 @@ func (h *CategoryHandler) ListCategories(c echo.Context) error {
 		})
 	}
 
-	categories, err := h.listCategoriesUseCase.Execute(c.Request().Context(), userID)
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
-			"error": err.Error(),
-		})
+	// Parse optional type filter
+	var categoryType *domain.CategoryType
+	if typeFilter := c.QueryParam("type"); typeFilter != "" {
+		ct := domain.CategoryType(typeFilter)
+		categoryType = &ct
 	}
 
-	// Filter by type if provided
-	typeFilter := c.QueryParam("type")
-	if typeFilter != "" {
-		filtered := make([]domain.Category, 0)
-		filterType := domain.CategoryType(typeFilter)
-		for _, cat := range categories {
-			if cat.Type == filterType {
-				filtered = append(filtered, cat)
-			}
-		}
-		categories = filtered
+	categories, err := h.listCategoriesUseCase.Execute(c.Request().Context(), userID, categoryType)
+	if err != nil {
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
+			"error": err.Error(),
+		})
 	}
 
 	return c.JSON(http.StatusOK, dto.ToCategoryResponseList(categories))
@@ -218,7 +212,7 @@ func (h *CategoryHandler) UpdateCategory(c echo.Context) error {
 
 	cat, err := h.updateCategoryUseCase.Execute(c.Request().Context(), input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -252,7 +246,7 @@ func (h *CategoryHandler) DeleteCategory(c echo.Context) error {
 
 	err = h.deleteCategoryUseCase.Execute(c.Request().Context(), uint(categoryID), userID)
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}

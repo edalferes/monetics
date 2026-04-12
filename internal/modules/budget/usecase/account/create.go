@@ -25,12 +25,11 @@ func NewCreateUseCase(accountRepo interfaces.AccountRepository, log logger.Logge
 
 // CreateInput represents the input for creating an account
 type CreateInput struct {
-	UserID         uint               `json:"user_id" validate:"required"`
-	Name           string             `json:"name" validate:"required"`
-	Type           domain.AccountType `json:"type" validate:"required"`
-	InitialBalance float64            `json:"initial_balance"`
-	Currency       string             `json:"currency"`
-	Description    string             `json:"description,omitempty"`
+	UserID      uint               `json:"user_id" validate:"required"`
+	Name        string             `json:"name" validate:"required"`
+	Type        domain.AccountType `json:"type" validate:"required"`
+	Currency    string             `json:"currency"`
+	Description string             `json:"description,omitempty"`
 }
 
 // Execute creates a new account
@@ -63,7 +62,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input CreateInput) (domain
 		UserID:      input.UserID,
 		Name:        input.Name,
 		Type:        input.Type,
-		Balance:     input.InitialBalance,
+		Balance:     0,
 		Currency:    input.Currency,
 		Description: input.Description,
 		IsActive:    true,

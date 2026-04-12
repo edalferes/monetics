@@ -82,6 +82,20 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input CreateInput) (domain
 		return domain.Budget{}, errors.ErrUnauthorizedAccess
 	}
 
+	// Check for overlapping budgets in the same category and period
+	overlapping, err := uc.budgetRepo.GetOverlapping(ctx, input.UserID, input.CategoryID, input.StartDate, input.EndDate, nil)
+	if err != nil {
+		uc.logger.Error().Err(err).Msg("failed to check for overlapping budgets")
+		return domain.Budget{}, err
+	}
+	if len(overlapping) > 0 {
+		uc.logger.Warn().
+			Uint("category_id", input.CategoryID).
+			Int("overlapping_count", len(overlapping)).
+			Msg("budget period overlaps with existing budget")
+		return domain.Budget{}, errors.ErrBudgetOverlap
+	}
+
 	budgetEntity := domain.Budget{
 		UserID:      input.UserID,
 		CategoryID:  input.CategoryID,

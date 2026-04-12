@@ -8,7 +8,7 @@ type AccountType string
 const (
 	AccountTypeChecking AccountType = "checking"   // Conta corrente
 	AccountTypeSavings  AccountType = "savings"    // Savings account
-	AccountTypeCredit   AccountType = "credit"     // Credit card
+	AccountTypeCredit   AccountType = "credit_card" // Credit card
 	AccountTypeCash     AccountType = "cash"       // Dinheiro
 	AccountTypeInvest   AccountType = "investment" // Investimentos
 )
