@@ -15,8 +15,6 @@ jobs:
   release-please:
     name: Release Please
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
-    needs: [test, build]
     steps:
       - name: Run Release Please
         uses: googleapis/release-please-action@v4
