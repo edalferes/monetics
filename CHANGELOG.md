@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.20.0](https://github.com/edalferes/monetics/compare/v0.19.0...v0.20.0) (2026-04-12)
+
+
+### Features
+
+* implements import scsv transactions ([e1ce2a2](https://github.com/edalferes/monetics/commit/e1ce2a2bdbf2872691f77a48cf9042e9dd3ed616))
+* implements import scsv transactions ([c147b7d](https://github.com/edalferes/monetics/commit/c147b7d31078edc9493968913dadbc0961d5f4ea))
+
 ## [0.19.0](https://github.com/edalferes/monetics/compare/v0.18.0...v0.19.0) (2026-04-12)
 
 
