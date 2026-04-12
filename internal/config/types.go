@@ -52,7 +52,7 @@ type RootUserConfig struct {
 // GetDSN returns the database connection string
 func (c *Config) GetDSN() string {
 	return fmt.Sprintf(
-		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s TimeZone=UTC",
 		c.Database.Host,
 		c.Database.Port,
 		c.Database.User,
