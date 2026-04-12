@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.21.0](https://github.com/edalferes/monetics/compare/v0.20.0...v0.21.0) (2026-04-12)
+
+
+### Features
+
+* update test ([caca43a](https://github.com/edalferes/monetics/commit/caca43a143798fc0af387669a3a18ff9f4b9cd4d))
+
 ## [0.20.0](https://github.com/edalferes/monetics/compare/v0.19.0...v0.20.0) (2026-04-12)
 
 
