@@ -21,6 +21,8 @@ func convertTransactionType(t *string) *domain.TransactionType {
 	return &txType
 }
 
+const maxImportBatchSize = 1000 // Max transactions per import
+
 // TransactionHandler handles HTTP requests for transactions
 type TransactionHandler struct {
 	createTransactionUseCase  *transaction.CreateUseCase
@@ -28,6 +30,7 @@ type TransactionHandler struct {
 	getTransactionByIDUseCase *transaction.GetByIDUseCase
 	updateTransactionUseCase  *transaction.UpdateUseCase
 	deleteTransactionUseCase  *transaction.DeleteUseCase
+	importCSVUseCase          *transaction.ImportCSVUseCase
 }
 
 // NewTransactionHandler creates a new transaction handler
@@ -37,6 +40,7 @@ func NewTransactionHandler(
 	getTransactionByIDUseCase *transaction.GetByIDUseCase,
 	updateTransactionUseCase *transaction.UpdateUseCase,
 	deleteTransactionUseCase *transaction.DeleteUseCase,
+	importCSVUseCase *transaction.ImportCSVUseCase,
 ) *TransactionHandler {
 	return &TransactionHandler{
 		createTransactionUseCase:  createTransactionUseCase,
@@ -44,6 +48,7 @@ func NewTransactionHandler(
 		getTransactionByIDUseCase: getTransactionByIDUseCase,
 		updateTransactionUseCase:  updateTransactionUseCase,
 		deleteTransactionUseCase:  deleteTransactionUseCase,
+		importCSVUseCase:          importCSVUseCase,
 	}
 }
 
@@ -327,4 +332,60 @@ func (h *TransactionHandler) DeleteTransaction(c echo.Context) error {
 	}
 
 	return c.NoContent(http.StatusNoContent)
+}
+
+// ImportCSV handles importing transactions from a CSV file
+// @Summary Import transactions from CSV
+// @Tags Budget - Transactions
+// @Accept json
+// @Produce json
+// @Param request body dto.ImportTransactionsRequest true "Bulk import request"
+// @Success 200 {object} dto.ImportTransactionsResponse
+// @Failure 400 {object} map[string]interface{}
+// @Router /transactions/import [post]
+func (h *TransactionHandler) ImportCSV(c echo.Context) error {
+	var req dto.ImportTransactionsRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "Invalid request body",
+		})
+	}
+
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+
+	userID, err := GetUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+
+	items := make([]transaction.ImportItem, len(req.Transactions))
+	for i, t := range req.Transactions {
+		items[i] = transaction.ImportItem{
+			Date:        t.Date,
+			Description: t.Description,
+			Amount:      t.Amount,
+			CategoryID:  t.CategoryID,
+		}
+	}
+
+	input := transaction.ImportInput{
+		UserID:       userID,
+		AccountID:    req.AccountID,
+		Transactions: items,
+	}
+
+	result, err := h.importCSVUseCase.Execute(c.Request().Context(), input)
+	if err != nil {
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, dto.ToImportTransactionsResponse(result))
 }

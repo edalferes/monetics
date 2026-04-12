@@ -46,6 +46,7 @@ type Module struct {
 	getTransactionByIDUseCase *transaction.GetByIDUseCase
 	updateTransactionUseCase  *transaction.UpdateUseCase
 	deleteTransactionUseCase  *transaction.DeleteUseCase
+	importCSVUseCase          *transaction.ImportCSVUseCase
 
 	// Use cases - Budget
 	createBudgetUseCase  *budget.CreateUseCase
@@ -110,6 +111,13 @@ func NewModule(db *gorm.DB, log logger.Logger) *Module {
 		log,
 	)
 	module.deleteTransactionUseCase = transaction.NewDeleteUseCase(module.transactionRepo, module.budgetRepo, log)
+	module.importCSVUseCase = transaction.NewImportCSVUseCase(
+		module.transactionRepo,
+		module.accountRepo,
+		module.categoryRepo,
+		module.budgetRepo,
+		log,
+	)
 
 	// Initialize use cases - Budget
 	module.createBudgetUseCase = budget.NewCreateUseCase(
@@ -155,6 +163,7 @@ func NewModule(db *gorm.DB, log logger.Logger) *Module {
 		module.getTransactionByIDUseCase,
 		module.updateTransactionUseCase,
 		module.deleteTransactionUseCase,
+		module.importCSVUseCase,
 	)
 	module.budgetHandler = handlers.NewBudgetHandler(
 		module.createBudgetUseCase,
@@ -195,6 +204,7 @@ func (m *Module) RegisterRoutes(api *echo.Group, authMiddleware echo.MiddlewareF
 	// Transaction routes
 	transactions := budget.Group("/transactions")
 	transactions.POST("", m.transactionHandler.CreateTransaction)
+	transactions.POST("/import", m.transactionHandler.ImportCSV)
 	transactions.GET("", m.transactionHandler.ListTransactions)
 	transactions.GET("/:id", m.transactionHandler.GetTransactionByID)
 	transactions.PUT("/:id", m.transactionHandler.UpdateTransaction)
