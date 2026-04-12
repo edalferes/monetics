@@ -10,15 +10,24 @@ import (
 
 // DeleteUseCase handles category deletion (soft delete)
 type DeleteUseCase struct {
-	categoryRepo interfaces.CategoryRepository
-	logger       logger.Logger
+	categoryRepo    interfaces.CategoryRepository
+	transactionRepo interfaces.TransactionRepository
+	budgetRepo      interfaces.BudgetRepository
+	logger          logger.Logger
 }
 
 // NewDeleteUseCase creates a new use case instance
-func NewDeleteUseCase(categoryRepo interfaces.CategoryRepository, log logger.Logger) *DeleteUseCase {
+func NewDeleteUseCase(
+	categoryRepo interfaces.CategoryRepository,
+	transactionRepo interfaces.TransactionRepository,
+	budgetRepo interfaces.BudgetRepository,
+	log logger.Logger,
+) *DeleteUseCase {
 	return &DeleteUseCase{
-		categoryRepo: categoryRepo,
-		logger:       log.With().Str("usecase", "category.delete").Logger(),
+		categoryRepo:    categoryRepo,
+		transactionRepo: transactionRepo,
+		budgetRepo:      budgetRepo,
+		logger:          log.With().Str("usecase", "category.delete").Logger(),
 	}
 }
 
@@ -47,7 +56,29 @@ func (uc *DeleteUseCase) Execute(ctx context.Context, categoryID, userID uint) e
 		return errors.ErrCategoryNotFound
 	}
 
-	// Soft delete by marking as inactive
+	// Check if category is in use by transactions
+	transactions, err := uc.transactionRepo.GetByCategoryID(ctx, categoryID)
+	if err != nil {
+		uc.logger.Error().Err(err).Uint("category_id", categoryID).Msg("failed to check transactions")
+		return errors.ErrInternalServer
+	}
+	if len(transactions) > 0 {
+		uc.logger.Warn().Uint("category_id", categoryID).Int("transactions", len(transactions)).Msg("category in use by transactions")
+		return errors.ErrCategoryInUse
+	}
+
+	// Check if category is in use by budgets
+	budgets, err := uc.budgetRepo.GetByCategoryID(ctx, categoryID)
+	if err != nil {
+		uc.logger.Error().Err(err).Uint("category_id", categoryID).Msg("failed to check budgets")
+		return errors.ErrInternalServer
+	}
+	if len(budgets) > 0 {
+		uc.logger.Warn().Uint("category_id", categoryID).Int("budgets", len(budgets)).Msg("category in use by budgets")
+		return errors.ErrCategoryInUse
+	}
+
+	// Safe to delete
 	err = uc.categoryRepo.Delete(ctx, categoryID)
 	if err != nil {
 		uc.logger.Error().Err(err).Uint("category_id", categoryID).Msg("failed to delete category")

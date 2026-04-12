@@ -91,7 +91,7 @@ func NewModule(db *gorm.DB, log logger.Logger) *Module {
 	module.listCategoriesUseCase = category.NewListUseCase(module.categoryRepo, log)
 	module.getCategoryByIDUseCase = category.NewGetByIDUseCase(module.categoryRepo, log)
 	module.updateCategoryUseCase = category.NewUpdateUseCase(module.categoryRepo, log)
-	module.deleteCategoryUseCase = category.NewDeleteUseCase(module.categoryRepo, log)
+	module.deleteCategoryUseCase = category.NewDeleteUseCase(module.categoryRepo, module.transactionRepo, module.budgetRepo, log)
 
 	// Initialize use cases - Transaction
 	module.createTransactionUseCase = transaction.NewCreateUseCase(
