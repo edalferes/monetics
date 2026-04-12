@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.19.0](https://github.com/edalferes/monetics/compare/v0.18.0...v0.19.0) (2026-04-12)
+
+
+### Features
+
+* update docs ([1010519](https://github.com/edalferes/monetics/commit/1010519bf6ac073382eb65f2554055711bd1db11))
+* update release ([b26d02c](https://github.com/edalferes/monetics/commit/b26d02cd3204a3efc0b76124f27f12e1032c6eb2))
+* update release ([89aa3cb](https://github.com/edalferes/monetics/commit/89aa3cb7e8e18d171b4ddb630203581d3bb24e4b))
+* update version ([a3e9212](https://github.com/edalferes/monetics/commit/a3e92128813543c7bf9237a6e492bc3e7467d229))
+* update version ([f2238a4](https://github.com/edalferes/monetics/commit/f2238a4402cf60ddc3e42e97be29aadd4ef2a120))
+
 ## [0.18.0](https://github.com/edalferes/monetics/compare/v0.17.0...v0.18.0) (2025-12-14)
 
 
