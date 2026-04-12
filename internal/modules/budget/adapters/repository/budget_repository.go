@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"gorm.io/gorm"
 
@@ -78,4 +79,28 @@ func (r *BudgetRepository) ExistsByID(ctx context.Context, id uint) (bool, error
 
 func (r *BudgetRepository) UpdateSpent(ctx context.Context, budgetID uint, spent float64) error {
 	return r.db.WithContext(ctx).Model(&domain.Budget{}).Where("id = ?", budgetID).Update("spent", spent).Error
+}
+
+func (r *BudgetRepository) GetOverlapping(ctx context.Context, userID uint, categoryID uint, startDate, endDate time.Time, excludeBudgetID *uint) ([]domain.Budget, error) {
+	var budgets []domain.Budget
+	query := r.db.WithContext(ctx).
+		Where("user_id = ? AND category_id = ? AND is_active = ? AND start_date < ? AND end_date > ?",
+			userID, categoryID, true, endDate, startDate)
+	if excludeBudgetID != nil {
+		query = query.Where("id != ?", *excludeBudgetID)
+	}
+	if err := query.Find(&budgets).Error; err != nil {
+		return nil, err
+	}
+	return budgets, nil
+}
+
+func (r *BudgetRepository) UpdateSpentAtomic(ctx context.Context, budgetID uint, categoryID uint, startDate, endDate time.Time) error {
+	return r.db.WithContext(ctx).
+		Model(&domain.Budget{}).
+		Where("id = ?", budgetID).
+		Update("spent", r.db.Raw(
+			"COALESCE((SELECT SUM(amount) FROM budget_transactions WHERE category_id = ? AND type = ? AND date BETWEEN ? AND ? AND status = ?), 0)",
+			categoryID, string(domain.TransactionTypeExpense), startDate, endDate, string(domain.TransactionStatusCompleted),
+		)).Error
 }

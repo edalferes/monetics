@@ -37,7 +37,7 @@ func (r *AccountRepository) GetByID(ctx context.Context, id uint) (domain.Accoun
 
 func (r *AccountRepository) GetByUserID(ctx context.Context, userID uint) ([]domain.Account, error) {
 	var accounts []domain.Account
-	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&accounts).Error; err != nil {
+	if err := r.db.WithContext(ctx).Where("user_id = ? AND is_active = ?", userID, true).Find(&accounts).Error; err != nil {
 		return nil, err
 	}
 	return accounts, nil
@@ -51,7 +51,7 @@ func (r *AccountRepository) Update(ctx context.Context, account domain.Account) 
 }
 
 func (r *AccountRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&domain.Account{}, id).Error
+	return r.db.WithContext(ctx).Model(&domain.Account{}).Where("id = ?", id).Update("is_active", false).Error
 }
 
 func (r *AccountRepository) ExistsByID(ctx context.Context, id uint) (bool, error) {

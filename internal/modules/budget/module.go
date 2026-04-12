@@ -80,7 +80,7 @@ func NewModule(db *gorm.DB, log logger.Logger) *Module {
 
 	// Initialize use cases - Account
 	module.createAccountUseCase = account.NewCreateUseCase(module.accountRepo, log)
-	module.listAccountsUseCase = account.NewListUseCase(module.accountRepo, log)
+	module.listAccountsUseCase = account.NewListUseCase(module.accountRepo, module.transactionRepo, log)
 	module.getAccountByIDUseCase = account.NewGetByIDUseCase(module.accountRepo, log)
 	module.updateAccountUseCase = account.NewUpdateUseCase(module.accountRepo, log)
 	module.deleteAccountUseCase = account.NewDeleteUseCase(module.accountRepo, log)
@@ -106,9 +106,10 @@ func NewModule(db *gorm.DB, log logger.Logger) *Module {
 		module.transactionRepo,
 		module.accountRepo,
 		module.categoryRepo,
+		module.budgetRepo,
 		log,
 	)
-	module.deleteTransactionUseCase = transaction.NewDeleteUseCase(module.transactionRepo, log)
+	module.deleteTransactionUseCase = transaction.NewDeleteUseCase(module.transactionRepo, module.budgetRepo, log)
 
 	// Initialize use cases - Budget
 	module.createBudgetUseCase = budget.NewCreateUseCase(

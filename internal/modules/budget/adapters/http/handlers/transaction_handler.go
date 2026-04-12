@@ -90,7 +90,7 @@ func (h *TransactionHandler) CreateTransaction(c echo.Context) error {
 
 	tx, err := h.createTransactionUseCase.Execute(c.Request().Context(), input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -178,7 +178,7 @@ func (h *TransactionHandler) ListTransactions(c echo.Context) error {
 
 	result, err := h.listTransactionsUseCase.Execute(c.Request().Context(), input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -287,7 +287,7 @@ func (h *TransactionHandler) UpdateTransaction(c echo.Context) error {
 
 	tx, err := h.updateTransactionUseCase.Execute(c.Request().Context(), input)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}
@@ -321,7 +321,7 @@ func (h *TransactionHandler) DeleteTransaction(c echo.Context) error {
 
 	err = h.deleteTransactionUseCase.Execute(c.Request().Context(), userID, uint(transactionID))
 	if err != nil {
-		return c.JSON(http.StatusNotFound, map[string]interface{}{
+		return c.JSON(errorToHTTPStatus(err), map[string]interface{}{
 			"error": err.Error(),
 		})
 	}

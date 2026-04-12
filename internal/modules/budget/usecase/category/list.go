@@ -22,11 +22,18 @@ func NewListUseCase(categoryRepo interfaces.CategoryRepository, log logger.Logge
 	}
 }
 
-// Execute lists all categories for a user
-func (uc *ListUseCase) Execute(ctx context.Context, userID uint) ([]domain.Category, error) {
+// Execute lists all categories for a user, optionally filtered by type
+func (uc *ListUseCase) Execute(ctx context.Context, userID uint, categoryType *domain.CategoryType) ([]domain.Category, error) {
 	uc.logger.Debug().Uint("user_id", userID).Msg("listing categories")
 
-	categories, err := uc.categoryRepo.GetByUserID(ctx, userID)
+	var categories []domain.Category
+	var err error
+
+	if categoryType != nil {
+		categories, err = uc.categoryRepo.GetByType(ctx, userID, *categoryType)
+	} else {
+		categories, err = uc.categoryRepo.GetByUserID(ctx, userID)
+	}
 	if err != nil {
 		uc.logger.Error().Err(err).Uint("user_id", userID).Msg("failed to list categories")
 		return nil, err

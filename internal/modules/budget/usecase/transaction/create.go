@@ -87,12 +87,22 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input CreateInput) (domain
 		return domain.Transaction{}, errors.ErrUnauthorizedAccess
 	}
 
-	// Normalize destination_account_id: treat 0 as nil
+	// Validate transfer-specific fields
 	var destinationAccountID *uint
-	if input.DestinationAccountID != nil && *input.DestinationAccountID > 0 {
+	if input.Type == domain.TransactionTypeTransfer {
+		// Transfer requires a destination account
+		if input.DestinationAccountID == nil || *input.DestinationAccountID == 0 {
+			uc.logger.Error().Msg("transfer requires destination account")
+			return domain.Transaction{}, errors.ErrTransferRequiresDestination
+		}
+		// Cannot transfer to same account
+		if *input.DestinationAccountID == input.AccountID {
+			uc.logger.Error().Msg("cannot transfer to same account")
+			return domain.Transaction{}, errors.ErrTransferSameAccount
+		}
 		destinationAccountID = input.DestinationAccountID
 
-		// Validate destination account for transfers
+		// Validate destination account exists and belongs to user
 		uc.logger.Debug().Uint("destination_account_id", *input.DestinationAccountID).Msg("validating destination account for transfer")
 		destAccount, err := uc.accountRepo.GetByID(ctx, *input.DestinationAccountID)
 		if err != nil {
@@ -106,6 +116,9 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input CreateInput) (domain
 				Msg("unauthorized access: destination account belongs to different user")
 			return domain.Transaction{}, errors.ErrUnauthorizedAccess
 		}
+	} else if input.DestinationAccountID != nil && *input.DestinationAccountID > 0 {
+		// Non-transfer transactions should not have destination account; normalize to nil
+		destinationAccountID = nil
 	}
 
 	// Parse date
@@ -124,6 +137,7 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input CreateInput) (domain
 		Amount:               input.Amount,
 		Description:          input.Description,
 		Date:                 date,
+		Month:                date.Format("2006-01"),
 		Status:               domain.TransactionStatusCompleted,
 		DestinationAccountID: destinationAccountID,
 	}
@@ -145,14 +159,14 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input CreateInput) (domain
 
 	// Update budget spent if this is an expense transaction
 	if input.Type == domain.TransactionTypeExpense {
-		uc.logger.Debug().Uint("user_id", input.UserID).Uint("category_id", input.CategoryID).Msg("triggering async budget spent update")
-		go uc.updateBudgetSpent(context.Background(), input.UserID, input.CategoryID, date)
+		uc.logger.Debug().Uint("user_id", input.UserID).Uint("category_id", input.CategoryID).Msg("updating budget spent")
+		uc.updateBudgetSpent(ctx, input.UserID, input.CategoryID, date)
 	}
 
 	return createdTx, nil
 }
 
-// updateBudgetSpent updates the spent amount for active budgets of the category
+// updateBudgetSpent atomically updates the spent amount for active budgets of the category
 func (uc *CreateUseCase) updateBudgetSpent(ctx context.Context, userID, categoryID uint, transactionDate time.Time) {
 	uc.logger.Debug().Uint("user_id", userID).Uint("category_id", categoryID).Msg("updating budget spent")
 
@@ -170,24 +184,8 @@ func (uc *CreateUseCase) updateBudgetSpent(ctx context.Context, userID, category
 			!transactionDate.Before(budget.StartDate) &&
 			!transactionDate.After(budget.EndDate) {
 
-			// Calculate total spent for this budget
-			transactions, err := uc.transactionRepo.GetByDateRange(ctx, userID, budget.StartDate, budget.EndDate)
-			if err != nil {
-				uc.logger.Error().Err(err).Uint("budget_id", budget.ID).Msg("failed to get transactions for budget spent calculation")
-				continue
-			}
-
-			var spent float64
-			for _, tx := range transactions {
-				if tx.CategoryID == categoryID && tx.Type == domain.TransactionTypeExpense {
-					spent += tx.Amount
-				}
-			}
-
-			uc.logger.Debug().Uint("budget_id", budget.ID).Msg("calculated budget spent")
-
-			// Update budget spent
-			err = uc.budgetRepo.UpdateSpent(ctx, budget.ID, spent)
+			// Atomically update spent using SQL subquery
+			err = uc.budgetRepo.UpdateSpentAtomic(ctx, budget.ID, categoryID, budget.StartDate, budget.EndDate)
 			if err != nil {
 				uc.logger.Error().Err(err).Uint("budget_id", budget.ID).Msg("failed to update budget spent")
 			} else {

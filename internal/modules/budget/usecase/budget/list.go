@@ -31,36 +31,21 @@ func (uc *ListUseCase) Execute(ctx context.Context, userID uint) ([]domain.Budge
 		return nil, err
 	}
 
-	// Calculate spent for each budget based on transactions
+	// Update spent for each budget atomically via SQL
 	for i := range budgets {
-		spent, err := uc.calculateSpent(ctx, budgets[i])
-		if err != nil {
-			uc.logger.Error().Err(err).Uint("budget_id", budgets[i].ID).Msg("failed to calculate spent, skipping")
+		if err := uc.budgetRepo.UpdateSpentAtomic(ctx, budgets[i].ID, budgets[i].CategoryID, budgets[i].StartDate, budgets[i].EndDate); err != nil {
+			uc.logger.Error().Err(err).Uint("budget_id", budgets[i].ID).Msg("failed to update spent atomically, skipping")
 			continue
 		}
-		budgets[i].Spent = spent
+		// Re-fetch the updated budget to get the new spent value
+		updated, err := uc.budgetRepo.GetByID(ctx, budgets[i].ID)
+		if err != nil {
+			uc.logger.Error().Err(err).Uint("budget_id", budgets[i].ID).Msg("failed to re-fetch budget after spent update")
+			continue
+		}
+		budgets[i].Spent = updated.Spent
 	}
 
 	uc.logger.Info().Uint("user_id", userID).Int("count", len(budgets)).Msg("budgets listed successfully")
 	return budgets, nil
-}
-
-// calculateSpent calculates total spent for a budget based on transactions
-func (uc *ListUseCase) calculateSpent(ctx context.Context, budget domain.Budget) (float64, error) {
-	// Get transactions by category within budget period
-	transactions, err := uc.transactionRepo.GetByDateRange(ctx, budget.UserID, budget.StartDate, budget.EndDate)
-	if err != nil {
-		uc.logger.Error().Err(err).Uint("budget_id", budget.ID).Msg("failed to get transactions for spent calculation")
-		return 0, err
-	}
-
-	var spent float64
-	for _, tx := range transactions {
-		// Only count expenses for this category
-		if tx.CategoryID == budget.CategoryID && tx.Type == domain.TransactionTypeExpense {
-			spent += tx.Amount
-		}
-	}
-
-	return spent, nil
 }
