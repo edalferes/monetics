@@ -13,15 +13,17 @@ import (
 //
 // Supported formats:
 //   - "2006-01-02" (date only)
+//   - "02/01/2006" (DD/MM/YYYY - Brazilian format)
 //   - "2006-01-02T15:04:05Z" (RFC3339)
 //   - "2006-01-02T15:04:05" (without timezone)
 //   - "2006-01-02T15:04:05-07:00" (with timezone offset)
 func ParseFlexibleDate(dateStr string) (time.Time, error) {
 	formats := []string{
-		"2006-01-02",          // Date only
+		"2006-01-02",          // Date only (ISO)
+		"02/01/2006",          // DD/MM/YYYY (Brazilian format)
 		time.RFC3339,          // Full RFC3339
 		"2006-01-02T15:04:05", // Without timezone
-		time.DateOnly,         // Go 1.20+ date format (same as first but explicit)
+		time.DateOnly,         // Go 1.20+ date format
 	}
 
 	for _, format := range formats {
