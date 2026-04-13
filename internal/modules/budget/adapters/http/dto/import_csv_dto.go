@@ -8,6 +8,7 @@ type ImportTransactionItem struct {
 	Description string  `json:"description" validate:"required"`
 	Amount      float64 `json:"amount" validate:"required,gt=0"`
 	CategoryID  uint    `json:"category_id" validate:"required"`
+	Type        string  `json:"type" validate:"omitempty,oneof=expense income transfer"`
 }
 
 // ImportTransactionsRequest represents the request to bulk import transactions

@@ -17,6 +17,7 @@ type ImportItem struct {
 	Description string  `json:"description"`
 	Amount      float64 `json:"amount"`
 	CategoryID  uint    `json:"category_id"`
+	Type        string  `json:"type"` // "expense", "income", or "transfer" (defaults to "expense")
 }
 
 // ImportInput represents the input for bulk import
@@ -64,7 +65,7 @@ func NewImportCSVUseCase(
 	}
 }
 
-// Execute processes a list of transaction items and creates expense transactions
+// Execute processes a list of transaction items and creates transactions
 func (uc *ImportCSVUseCase) Execute(ctx context.Context, input ImportInput) (ImportResult, error) {
 	uc.logger.Info().
 		Uint("user_id", input.UserID).
@@ -132,11 +133,20 @@ func (uc *ImportCSVUseCase) Execute(ctx context.Context, input ImportInput) (Imp
 			continue
 		}
 
+		// Determine transaction type (default to expense)
+		txType := domain.TransactionTypeExpense
+		switch item.Type {
+		case "income":
+			txType = domain.TransactionTypeIncome
+		case "transfer":
+			txType = domain.TransactionTypeTransfer
+		}
+
 		tx := domain.Transaction{
 			UserID:      input.UserID,
 			AccountID:   input.AccountID,
 			CategoryID:  item.CategoryID,
-			Type:        domain.TransactionTypeExpense,
+			Type:        txType,
 			Amount:      item.Amount,
 			Description: item.Description,
 			Date:        date,

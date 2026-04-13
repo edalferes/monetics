@@ -371,6 +371,7 @@ func (h *TransactionHandler) ImportCSV(c echo.Context) error {
 			Description: t.Description,
 			Amount:      t.Amount,
 			CategoryID:  t.CategoryID,
+			Type:        t.Type,
 		}
 	}
 
