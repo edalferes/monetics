@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.22.0](https://github.com/edalferes/monetics/compare/v0.21.0...v0.22.0) (2026-04-13)
+
+
+### Features
+
+* update import ([8aa36a1](https://github.com/edalferes/monetics/commit/8aa36a1d1a78820fb7eaf918d60d7ce3e009e311))
+* update import ([5e280db](https://github.com/edalferes/monetics/commit/5e280dbc4b0138267a937e9e0fe865c8d0675cff))
+
 ## [0.21.0](https://github.com/edalferes/monetics/compare/v0.20.0...v0.21.0) (2026-04-12)
 
 
