@@ -1,9 +1,10 @@
 package category_test
 
 import (
-	"github.com/edalferes/monetics/pkg/logger"
 	"context"
 	"testing"
+
+	"github.com/edalferes/monetics/pkg/logger"
 
 	"github.com/stretchr/testify/assert"
 
