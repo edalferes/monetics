@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.23.0](https://github.com/edalferes/monetics/compare/v0.22.0...v0.23.0) (2026-04-25)
+
+
+### Features
+
+* update ([354f725](https://github.com/edalferes/monetics/commit/354f725d15a15b8e459af62bd6c2b7efb48e5b8a))
+* update ([bb13745](https://github.com/edalferes/monetics/commit/bb13745d931d871386603ed2d121f0da37df721a))
+* update docker ([f972006](https://github.com/edalferes/monetics/commit/f9720066da5cafbdb4ceaf1198e3e55b42987cba))
+
 ## [0.22.0](https://github.com/edalferes/monetics/compare/v0.21.0...v0.22.0) (2026-04-13)
 
 
