@@ -1,6 +1,9 @@
 package auth
 
 import (
+	"fmt"
+	"strings"
+
 	"gorm.io/gorm"
 
 	"github.com/edalferes/monetics/internal/modules/auth/adapters/crypto"
@@ -8,7 +11,14 @@ import (
 	"github.com/edalferes/monetics/internal/modules/auth/domain"
 )
 
-func Seed(db *gorm.DB, rootUsername, rootPassword string) error {
+func Seed(db *gorm.DB, adminUsername, adminPassword string) error {
+	if strings.TrimSpace(adminUsername) == "" {
+		return fmt.Errorf("admin username is required for auth seed")
+	}
+	if strings.TrimSpace(adminPassword) == "" {
+		return fmt.Errorf("admin password is required for auth seed")
+	}
+
 	roleRepo := repository.NewRoleRepository(db)
 	permRepo := repository.NewPermissionRepository(db)
 	userRepo := repository.NewUserRepository(db)
@@ -59,8 +69,8 @@ func Seed(db *gorm.DB, rootUsername, rootPassword string) error {
 		// In a real app, you might want to implement an Update method for this
 	}
 
-	// Seed root user
-	_, err = userRepo.FindByUsername(rootUsername)
+	// Seed admin user
+	_, err = userRepo.FindByUsername(adminUsername)
 	if err != nil {
 		adminRole, err := roleRepo.FindByName("admin")
 		if err != nil {
@@ -70,16 +80,16 @@ func Seed(db *gorm.DB, rootUsername, rootPassword string) error {
 		if err != nil {
 			return err
 		}
-		hash, err := passwordService.Hash(rootPassword)
+		hash, err := passwordService.Hash(adminPassword)
 		if err != nil {
 			return err
 		}
-		rootUser := &domain.User{
-			Username: rootUsername,
+		adminUser := &domain.User{
+			Username: adminUsername,
 			Password: hash,
 			Roles:    []domain.Role{*adminRole, *userRole},
 		}
-		if err := userRepo.Create(rootUser); err != nil {
+		if err := userRepo.Create(adminUser); err != nil {
 			return err
 		}
 	}

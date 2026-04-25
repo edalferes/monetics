@@ -99,6 +99,10 @@ func (l *Loader) setDefaults() {
 	// Logger defaults
 	l.viper.SetDefault("logger.level", "info")
 	l.viper.SetDefault("logger.format", "json")
+
+	// Admin user defaults
+	l.viper.SetDefault("admin.username", "admin")
+	l.viper.SetDefault("admin.password", "root123")
 }
 
 // bindLegacyEnvVars binds legacy environment variable names for backward compatibility
@@ -124,4 +128,8 @@ func (l *Loader) bindLegacyEnvVars() {
 	// Map LOG_*
 	l.viper.BindEnv("logger.level", "LOG_LEVEL")
 	l.viper.BindEnv("logger.format", "LOG_FORMAT")
+
+	// Map ADMIN_*
+	l.viper.BindEnv("admin.username", "ADMIN_USERNAME")
+	l.viper.BindEnv("admin.password", "ADMIN_PASSWORD")
 }

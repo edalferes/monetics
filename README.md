@@ -182,8 +182,8 @@ Collection completa para testes manuais:
 
 ### Credenciais Padrão
 
-Usuário root criado automaticamente no seed:
-- **Username**: `root`
+Usuário admin criado automaticamente no seed:
+- **Username**: `admin`
 - **Password**: `root123`
 
 ## 🧪 Testes

@@ -71,16 +71,16 @@ func migrateDatabase(database *gorm.DB, log logger.Logger) {
 // seedDatabase seeds all modules
 func seedDatabase(database *gorm.DB, log logger.Logger, cfg *config.Config) {
 	// Seed auth module
-	if err := auth.Seed(database, cfg.RootUser.Username, cfg.RootUser.Password); err != nil {
+	if err := auth.Seed(database, cfg.Admin.Username, cfg.Admin.Password); err != nil {
 		log.Fatal().Err(err).Msg("failed to seed auth module")
 	}
 
 	// Seed budget module
-	var rootUser struct{ ID uint }
-	if err := database.Table("users").Select("id").Where("username = ?", cfg.RootUser.Username).First(&rootUser).Error; err != nil {
-		log.Fatal().Err(err).Msg("failed to find root user for budget seed")
+	var adminUser struct{ ID uint }
+	if err := database.Table("users").Select("id").Where("username = ?", cfg.Admin.Username).First(&adminUser).Error; err != nil {
+		log.Fatal().Err(err).Msg("failed to find admin user for budget seed")
 	}
-	if err := budget.Seed(database, rootUser.ID); err != nil {
+	if err := budget.Seed(database, adminUser.ID); err != nil {
 		log.Fatal().Err(err).Msg("failed to seed budget module")
 	}
 	log.Info().Msg("Database seeding completed")

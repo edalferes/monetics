@@ -249,6 +249,14 @@ func (m *MockBudgetRepository) GetActive(ctx context.Context, userID uint) ([]do
 	return args.Get(0).([]domain.Budget), args.Error(1)
 }
 
+func (m *MockBudgetRepository) GetOverlapping(ctx context.Context, userID uint, categoryID uint, startDate, endDate time.Time, excludeBudgetID *uint) ([]domain.Budget, error) {
+	args := m.Called(ctx, userID, categoryID, startDate, endDate, excludeBudgetID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Budget), args.Error(1)
+}
+
 func (m *MockBudgetRepository) Update(ctx context.Context, budget domain.Budget) (domain.Budget, error) {
 	args := m.Called(ctx, budget)
 	return args.Get(0).(domain.Budget), args.Error(1)
@@ -256,6 +264,11 @@ func (m *MockBudgetRepository) Update(ctx context.Context, budget domain.Budget)
 
 func (m *MockBudgetRepository) UpdateSpent(ctx context.Context, budgetID uint, spent float64) error {
 	args := m.Called(ctx, budgetID, spent)
+	return args.Error(0)
+}
+
+func (m *MockBudgetRepository) UpdateSpentAtomic(ctx context.Context, budgetID uint, categoryID uint, startDate, endDate time.Time) error {
+	args := m.Called(ctx, budgetID, categoryID, startDate, endDate)
 	return args.Error(0)
 }
 

@@ -482,7 +482,8 @@ func TestDeleteUseCase_Execute(t *testing.T) {
 
 	t.Run("should delete transaction successfully", func(t *testing.T) {
 		mockRepo := new(MockTransactionRepository)
-		usecase := transaction.NewDeleteUseCase(mockRepo, logger.NewDefault())
+		mockBudgetRepo := new(MockBudgetRepository)
+		usecase := transaction.NewDeleteUseCase(mockRepo, mockBudgetRepo, logger.NewDefault())
 
 		existingTx := domain.Transaction{
 			ID:        transactionID,
@@ -493,16 +494,19 @@ func TestDeleteUseCase_Execute(t *testing.T) {
 
 		mockRepo.On("GetByID", ctx, transactionID).Return(existingTx, nil)
 		mockRepo.On("Delete", ctx, transactionID).Return(nil)
+		mockBudgetRepo.On("GetByUserID", ctx, userID).Return([]domain.Budget{}, nil)
 
 		err := usecase.Execute(ctx, userID, transactionID)
 
 		assert.NoError(t, err)
 		mockRepo.AssertExpectations(t)
+		mockBudgetRepo.AssertExpectations(t)
 	})
 
 	t.Run("should return error when transaction not found", func(t *testing.T) {
 		mockRepo := new(MockTransactionRepository)
-		usecase := transaction.NewDeleteUseCase(mockRepo, logger.NewDefault())
+		mockBudgetRepo := new(MockBudgetRepository)
+		usecase := transaction.NewDeleteUseCase(mockRepo, mockBudgetRepo, logger.NewDefault())
 
 		mockRepo.On("GetByID", ctx, transactionID).Return(domain.Transaction{}, budgetErrors.ErrTransactionNotFound)
 
@@ -510,11 +514,13 @@ func TestDeleteUseCase_Execute(t *testing.T) {
 
 		assert.Error(t, err)
 		mockRepo.AssertExpectations(t)
+		mockBudgetRepo.AssertExpectations(t)
 	})
 
 	t.Run("should return error when unauthorized", func(t *testing.T) {
 		mockRepo := new(MockTransactionRepository)
-		usecase := transaction.NewDeleteUseCase(mockRepo, logger.NewDefault())
+		mockBudgetRepo := new(MockBudgetRepository)
+		usecase := transaction.NewDeleteUseCase(mockRepo, mockBudgetRepo, logger.NewDefault())
 
 		existingTx := domain.Transaction{
 			ID:        transactionID,
@@ -530,6 +536,7 @@ func TestDeleteUseCase_Execute(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, budgetErrors.ErrTransactionNotFound, err)
 		mockRepo.AssertExpectations(t)
+		mockBudgetRepo.AssertExpectations(t)
 	})
 }
 
@@ -545,8 +552,9 @@ func TestUpdateUseCase_Execute(t *testing.T) {
 		mockTransactionRepo := new(MockTransactionRepository)
 		mockAccountRepo := new(MockAccountRepository)
 		mockCategoryRepo := new(MockCategoryRepository)
+		mockBudgetRepo := new(MockBudgetRepository)
 
-		usecase := transaction.NewUpdateUseCase(mockTransactionRepo, mockAccountRepo, mockCategoryRepo, logger.NewDefault())
+		usecase := transaction.NewUpdateUseCase(mockTransactionRepo, mockAccountRepo, mockCategoryRepo, mockBudgetRepo, logger.NewDefault())
 
 		existingTx := domain.Transaction{
 			ID:          transactionID,
@@ -580,6 +588,7 @@ func TestUpdateUseCase_Execute(t *testing.T) {
 				t.Amount == newAmount &&
 				t.Description == newDescription
 		})).Return(updatedTx, nil)
+		mockBudgetRepo.On("GetByUserID", ctx, userID).Return([]domain.Budget{}, nil)
 
 		result, err := usecase.Execute(ctx, input)
 
@@ -587,14 +596,16 @@ func TestUpdateUseCase_Execute(t *testing.T) {
 		assert.Equal(t, newAmount, result.Amount)
 		assert.Equal(t, newDescription, result.Description)
 		mockTransactionRepo.AssertExpectations(t)
+		mockBudgetRepo.AssertExpectations(t)
 	})
 
 	t.Run("should return error when transaction not found", func(t *testing.T) {
 		mockTransactionRepo := new(MockTransactionRepository)
 		mockAccountRepo := new(MockAccountRepository)
 		mockCategoryRepo := new(MockCategoryRepository)
+		mockBudgetRepo := new(MockBudgetRepository)
 
-		usecase := transaction.NewUpdateUseCase(mockTransactionRepo, mockAccountRepo, mockCategoryRepo, logger.NewDefault())
+		usecase := transaction.NewUpdateUseCase(mockTransactionRepo, mockAccountRepo, mockCategoryRepo, mockBudgetRepo, logger.NewDefault())
 
 		newAmount := 200.00
 
@@ -610,14 +621,16 @@ func TestUpdateUseCase_Execute(t *testing.T) {
 
 		assert.Error(t, err)
 		mockTransactionRepo.AssertExpectations(t)
+		mockBudgetRepo.AssertExpectations(t)
 	})
 
 	t.Run("should return error when unauthorized", func(t *testing.T) {
 		mockTransactionRepo := new(MockTransactionRepository)
 		mockAccountRepo := new(MockAccountRepository)
 		mockCategoryRepo := new(MockCategoryRepository)
+		mockBudgetRepo := new(MockBudgetRepository)
 
-		usecase := transaction.NewUpdateUseCase(mockTransactionRepo, mockAccountRepo, mockCategoryRepo, logger.NewDefault())
+		usecase := transaction.NewUpdateUseCase(mockTransactionRepo, mockAccountRepo, mockCategoryRepo, mockBudgetRepo, logger.NewDefault())
 
 		existingTx := domain.Transaction{
 			ID:        transactionID,
@@ -641,14 +654,16 @@ func TestUpdateUseCase_Execute(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, budgetErrors.ErrTransactionNotFound, err)
 		mockTransactionRepo.AssertExpectations(t)
+		mockBudgetRepo.AssertExpectations(t)
 	})
 
 	t.Run("should return error for invalid amount", func(t *testing.T) {
 		mockTransactionRepo := new(MockTransactionRepository)
 		mockAccountRepo := new(MockAccountRepository)
 		mockCategoryRepo := new(MockCategoryRepository)
+		mockBudgetRepo := new(MockBudgetRepository)
 
-		usecase := transaction.NewUpdateUseCase(mockTransactionRepo, mockAccountRepo, mockCategoryRepo, logger.NewDefault())
+		usecase := transaction.NewUpdateUseCase(mockTransactionRepo, mockAccountRepo, mockCategoryRepo, mockBudgetRepo, logger.NewDefault())
 
 		existingTx := domain.Transaction{
 			ID:        transactionID,
@@ -672,5 +687,6 @@ func TestUpdateUseCase_Execute(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, budgetErrors.ErrInvalidAmount, err)
 		mockTransactionRepo.AssertExpectations(t)
+		mockBudgetRepo.AssertExpectations(t)
 	})
 }
