@@ -59,6 +59,10 @@ func loadFromEnvOnly() *Config {
 			Level:  getEnvOrDefault("LOG_LEVEL", "info"),
 			Format: getEnvOrDefault("LOG_FORMAT", "json"),
 		},
+		Admin: AdminConfig{
+			Username: getEnvOrDefault("ADMIN_USERNAME", "admin"),
+			Password: getEnvOrDefault("ADMIN_PASSWORD", "root123"),
+		},
 	}
 }
 
@@ -83,3 +87,4 @@ func parseInt(s string) int {
 	fmt.Sscanf(s, "%d", &result)
 	return result
 }
+

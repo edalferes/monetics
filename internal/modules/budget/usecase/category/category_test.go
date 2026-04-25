@@ -1,9 +1,10 @@
 package category_test
 
 import (
-	"github.com/edalferes/monetics/pkg/logger"
 	"context"
 	"testing"
+
+	"github.com/edalferes/monetics/pkg/logger"
 
 	"github.com/stretchr/testify/assert"
 
@@ -105,7 +106,7 @@ func TestListUseCase_Execute(t *testing.T) {
 
 		mockRepo.On("GetByUserID", ctx, uint(1)).Return(expectedCategories, nil)
 
-		result, err := uc.Execute(ctx, 1)
+		result, err := uc.Execute(ctx, 1, nil)
 
 		assert.NoError(t, err)
 		assert.Equal(t, expectedCategories, result)
@@ -225,7 +226,9 @@ func TestDeleteUseCase_Execute(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		mockRepo := new(MockCategoryRepository)
-		uc := category.NewDeleteUseCase(mockRepo, logger.NewDefault())
+		mockTransactionRepo := new(MockTransactionRepository)
+		mockBudgetRepo := new(MockBudgetRepository)
+		uc := category.NewDeleteUseCase(mockRepo, mockTransactionRepo, mockBudgetRepo, logger.NewDefault())
 
 		existingCategory := domain.Category{
 			ID:     1,
@@ -234,17 +237,23 @@ func TestDeleteUseCase_Execute(t *testing.T) {
 		}
 
 		mockRepo.On("GetByID", ctx, uint(1)).Return(existingCategory, nil)
+		mockTransactionRepo.On("GetByCategoryID", ctx, uint(1)).Return([]domain.Transaction{}, nil)
+		mockBudgetRepo.On("GetByCategoryID", ctx, uint(1)).Return([]domain.Budget{}, nil)
 		mockRepo.On("Delete", ctx, uint(1)).Return(nil)
 
 		err := uc.Execute(ctx, 1, 1)
 
 		assert.NoError(t, err)
 		mockRepo.AssertExpectations(t)
+		mockTransactionRepo.AssertExpectations(t)
+		mockBudgetRepo.AssertExpectations(t)
 	})
 
 	t.Run("error - unauthorized access", func(t *testing.T) {
 		mockRepo := new(MockCategoryRepository)
-		uc := category.NewDeleteUseCase(mockRepo, logger.NewDefault())
+		mockTransactionRepo := new(MockTransactionRepository)
+		mockBudgetRepo := new(MockBudgetRepository)
+		uc := category.NewDeleteUseCase(mockRepo, mockTransactionRepo, mockBudgetRepo, logger.NewDefault())
 
 		existingCategory := domain.Category{
 			ID:     1,
@@ -259,5 +268,7 @@ func TestDeleteUseCase_Execute(t *testing.T) {
 		assert.Error(t, err)
 		assert.Equal(t, errors.ErrCategoryNotFound, err)
 		mockRepo.AssertExpectations(t)
+		mockTransactionRepo.AssertExpectations(t)
+		mockBudgetRepo.AssertExpectations(t)
 	})
 }

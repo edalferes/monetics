@@ -37,6 +37,7 @@ func TestCreateUseCase_Execute(t *testing.T) {
 
 		category := domain.Category{ID: 1, UserID: 1, Name: "Alimentação"}
 		mockCategoryRepo.On("GetByID", ctx, uint(1)).Return(category, nil)
+		mockBudgetRepo.On("GetOverlapping", ctx, uint(1), uint(1), startDate, endDate, (*uint)(nil)).Return([]domain.Budget{}, nil)
 
 		expectedBudget := domain.Budget{
 			ID:         1,
@@ -110,8 +111,10 @@ func TestListUseCase_Execute(t *testing.T) {
 		}
 
 		mockRepo.On("GetByUserID", ctx, uint(1)).Return(expected, nil)
-		mockTransactionRepo.On("GetByDateRange", ctx, uint(1), startDate1, endDate1).Return([]domain.Transaction{}, nil)
-		mockTransactionRepo.On("GetByDateRange", ctx, uint(1), startDate2, endDate2).Return([]domain.Transaction{}, nil)
+		mockRepo.On("UpdateSpentAtomic", ctx, uint(1), uint(1), startDate1, endDate1).Return(nil)
+		mockRepo.On("GetByID", ctx, uint(1)).Return(expected[0], nil)
+		mockRepo.On("UpdateSpentAtomic", ctx, uint(2), uint(2), startDate2, endDate2).Return(nil)
+		mockRepo.On("GetByID", ctx, uint(2)).Return(expected[1], nil)
 
 		result, err := uc.Execute(ctx, 1)
 

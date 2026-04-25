@@ -1,9 +1,10 @@
 package account_test
 
 import (
-	"github.com/edalferes/monetics/pkg/logger"
 	"context"
 	"testing"
+
+	"github.com/edalferes/monetics/pkg/logger"
 
 	"github.com/stretchr/testify/assert"
 
@@ -125,7 +126,8 @@ func TestListUseCase_Execute(t *testing.T) {
 
 	t.Run("success with accounts", func(t *testing.T) {
 		mockRepo := new(MockAccountRepository)
-		uc := account.NewListUseCase(mockRepo, logger.NewDefault())
+		mockTransactionRepo := new(MockTransactionRepository)
+		uc := account.NewListUseCase(mockRepo, mockTransactionRepo, logger.NewDefault())
 
 		expectedAccounts := []domain.Account{
 			{ID: 1, UserID: 1, Name: "Account 1", Type: domain.AccountTypeChecking},
@@ -133,6 +135,8 @@ func TestListUseCase_Execute(t *testing.T) {
 		}
 
 		mockRepo.On("GetByUserID", ctx, uint(1)).Return(expectedAccounts, nil)
+		mockTransactionRepo.On("GetByAccountID", ctx, uint(1)).Return([]domain.Transaction{}, nil)
+		mockTransactionRepo.On("GetByAccountID", ctx, uint(2)).Return([]domain.Transaction{}, nil)
 
 		result, err := uc.Execute(ctx, 1)
 
@@ -140,11 +144,13 @@ func TestListUseCase_Execute(t *testing.T) {
 		assert.Equal(t, expectedAccounts, result)
 		assert.Len(t, result, 2)
 		mockRepo.AssertExpectations(t)
+		mockTransactionRepo.AssertExpectations(t)
 	})
 
 	t.Run("success with no accounts", func(t *testing.T) {
 		mockRepo := new(MockAccountRepository)
-		uc := account.NewListUseCase(mockRepo, logger.NewDefault())
+		mockTransactionRepo := new(MockTransactionRepository)
+		uc := account.NewListUseCase(mockRepo, mockTransactionRepo, logger.NewDefault())
 
 		mockRepo.On("GetByUserID", ctx, uint(1)).Return([]domain.Account{}, nil)
 
@@ -153,6 +159,7 @@ func TestListUseCase_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Empty(t, result)
 		mockRepo.AssertExpectations(t)
+		mockTransactionRepo.AssertExpectations(t)
 	})
 }
 

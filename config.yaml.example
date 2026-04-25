@@ -1,0 +1,28 @@
+# Example configuration for local/dev usage.
+# Copy to config.yaml and replace sensitive values via environment variables.
+
+app:
+  name: "monetics"
+  version: "1.0.0"
+  environment: "production" # development, staging, production
+  port: 8080
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "postgres"
+  password: "change_me" # Set via DB_PASSWORD env var
+  name: "monetics_database" # Set via DB_NAME env var
+  ssl_mode: "disable"
+
+jwt:
+  secret: "change_me" # REQUIRED: Set via JWT_SECRET env var
+  expiry_hour: 24
+
+logger:
+  level: "debug" # debug, info, warn, error, fatal
+  format: "console" # json, console
+
+admin:
+  username: "admin" # Set via ADMIN_USERNAME env var
+  password: "change_me" # Set via ADMIN_PASSWORD env var

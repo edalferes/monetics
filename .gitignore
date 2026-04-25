@@ -33,6 +33,8 @@
 .env.*
 
 # Configuration files (protect sensitive data)
+config.yaml
+!config.yaml.example
 config.local.yaml
 config.prod.yaml
 
