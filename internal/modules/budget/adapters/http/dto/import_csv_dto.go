@@ -19,8 +19,8 @@ type ImportTransactionsRequest struct {
 
 // ImportTransactionsResponse represents the response for bulk import
 type ImportTransactionsResponse struct {
-	Imported int                        `json:"imported"`
-	Errors   []transaction.ImportError  `json:"errors,omitempty"`
+	Imported int                       `json:"imported"`
+	Errors   []transaction.ImportError `json:"errors,omitempty"`
 }
 
 // ToImportTransactionsResponse converts use case result to response DTO

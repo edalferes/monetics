@@ -12,15 +12,6 @@ import (
 	"github.com/edalferes/monetics/internal/modules/budget/usecase/report"
 )
 
-// convertAccountType converts string pointer to AccountType pointer
-func convertAccountType(t *string) *domain.AccountType {
-	if t == nil {
-		return nil
-	}
-	accountType := domain.AccountType(*t)
-	return &accountType
-}
-
 // AccountHandler handles HTTP requests for accounts
 type AccountHandler struct {
 	createAccountUseCase     *account.CreateUseCase
@@ -245,7 +236,7 @@ func (h *AccountHandler) UpdateAccount(c echo.Context) error {
 		ID:          uint(accountID),
 		UserID:      userID,
 		Name:        req.Name,
-		Type:        convertAccountType(req.Type),
+		Type:        dto.AccountTypePtr(req.Type),
 		Currency:    req.Currency,
 		Description: req.Description,
 	}

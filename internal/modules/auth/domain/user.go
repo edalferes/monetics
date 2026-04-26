@@ -1,38 +1,36 @@
 // Package domain contains the core business entities for the auth module.
+// All structs here are framework-agnostic: no GORM, JSON, or HTTP tags.
 package domain
 
 // User represents a system user with authentication and authorization data.
 //
-// A User contains the essential information needed for authentication (username, password)
-// and authorization (roles). The password field stores the bcrypt hash, never plain text.
-//
-// Relationships:
-//   - User has many Roles (many-to-many through user_roles table)
-//   - Through Roles, User has access to Permissions
-//
-// Persistence considerations:
-//   - ID should be mapped to users.id (primary key)
-//   - Username should be mapped to users.username (unique constraint)
-//   - Password should be mapped to users.password_hash
-//   - Roles relationship should be loaded when needed
-//
-// Example:
-//
-//	user := &User{
-//		Username: "admin",
-//		Password: "$2a$10$...", // bcrypt hash
-//		Roles: []Role{
-//			{Name: "admin"},
-//			{Name: "user"},
-//		},
-//	}
+// Password stores a bcrypt hash, never plain text.
+// Roles is the user's authorization set, populated by the repository.
 type User struct {
-	ID       uint   `json:"id" gorm:"primaryKey"`
-	Username string `json:"username" gorm:"unique;not null"`
-	Password string `json:"-" gorm:"not null;column:password"`
-	Roles    []Role `json:"roles" gorm:"many2many:user_roles;joinForeignKey:user_model_id;joinReferences:role_model_id;constraint:OnDelete:CASCADE"`
+	ID       uint
+	Username string
+	Password string
+	Roles    []Role
 }
 
-func (User) TableName() string {
-	return "users"
+// HasRole reports whether the user has a role by name.
+func (u *User) HasRole(name string) bool {
+	for _, r := range u.Roles {
+		if r.Name == name {
+			return true
+		}
+	}
+	return false
+}
+
+// HasPermission reports whether the user has a permission via any role.
+func (u *User) HasPermission(name string) bool {
+	for _, r := range u.Roles {
+		for _, p := range r.Permissions {
+			if p.Name == name {
+				return true
+			}
+		}
+	}
+	return false
 }

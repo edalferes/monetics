@@ -236,12 +236,20 @@ func TestCreateUseCase_Execute(t *testing.T) {
 		mockAccountRepo.On("GetByID", ctx, accountID).Return(sourceAccount, nil)
 		mockCategoryRepo.On("GetByID", ctx, categoryID).Return(categoryObj, nil)
 		mockAccountRepo.On("GetByID", ctx, destAccountID).Return(destAccount, nil)
-		mockTransactionRepo.On("Create", ctx, mock.MatchedBy(func(t domain.Transaction) bool {
-			return t.UserID == userID &&
-				t.AccountID == accountID &&
-				t.DestinationAccountID != nil &&
-				*t.DestinationAccountID == destAccountID
-		})).Return(expectedTx, nil)
+		mockTransactionRepo.On("CreateTransfer", ctx,
+			mock.MatchedBy(func(t domain.Transaction) bool {
+				return t.UserID == userID &&
+					t.AccountID == accountID &&
+					t.DestinationAccountID != nil &&
+					*t.DestinationAccountID == destAccountID
+			}),
+			mock.MatchedBy(func(t domain.Transaction) bool {
+				return t.UserID == userID &&
+					t.AccountID == destAccountID &&
+					t.DestinationAccountID != nil &&
+					*t.DestinationAccountID == accountID
+			}),
+		).Return(expectedTx, expectedTx, nil)
 
 		result, err := usecase.Execute(ctx, input)
 

@@ -23,7 +23,7 @@ func TestRegisterUseCase_Execute(t *testing.T) {
 		}
 
 		username := "newuser"
-		password := "password123"
+		password := "Password123"
 		hashedPassword := "$2a$10$hashedpassword"
 
 		// Mock user not exists
@@ -62,7 +62,7 @@ func TestRegisterUseCase_Execute(t *testing.T) {
 		}
 
 		username := "existinguser"
-		password := "password123"
+		password := "Password123"
 
 		// Mock user already exists
 		existingUser := &domain.User{ID: 1, Username: username}
@@ -85,7 +85,7 @@ func TestRegisterUseCase_Execute(t *testing.T) {
 		}
 
 		username := "newuser"
-		password := "password123"
+		password := "Password123"
 		hashedPassword := "$2a$10$hashedpassword"
 
 		// Mock user not exists

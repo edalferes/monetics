@@ -50,18 +50,21 @@ func (uc *ListUseCase) Execute(ctx context.Context, userID uint) ([]domain.Accou
 			case domain.TransactionTypeExpense:
 				totalExpense += tx.Amount
 			case domain.TransactionTypeTransfer:
-				if tx.AccountID == accounts[i].ID {
+				// RN-T3: each transfer row's AccountID is the account it affects.
+				// ParentID != nil identifies the credit (incoming) row.
+				if tx.ParentID != nil {
+					totalTransfers += tx.Amount
+				} else {
 					totalTransfers -= tx.Amount
 					if tx.TransferFee != nil {
 						totalTransfers -= *tx.TransferFee
 					}
 				}
-				if tx.DestinationAccountID != nil && *tx.DestinationAccountID == accounts[i].ID {
-					totalTransfers += tx.Amount
-				}
 			}
 		}
 
+		// In-memory snapshot of current balance for the list response.
+		// The persisted Account.Balance remains the opening balance (RN-A1).
 		accounts[i].Balance = accounts[i].Balance + totalIncome - totalExpense + totalTransfers
 	}
 

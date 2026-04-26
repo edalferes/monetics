@@ -5,6 +5,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 
+	"github.com/edalferes/monetics/internal/modules/auth/adapters/http/dto"
 	"github.com/edalferes/monetics/internal/modules/auth/domain"
 )
 
@@ -25,33 +26,32 @@ type AdminHandler struct {
 // @Summary List all roles
 // @Tags Auth - Admin
 // @Security BearerAuth
-// @Success 200 {array} map[string]interface{}
+// @Success 200 {array} dto.RoleResponse
 // @Router /v1/admin/roles [get]
 func (h *AdminHandler) ListRoles(c echo.Context) error {
 	roles, err := h.ListRolesUC.Execute()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusOK, roles)
+	return c.JSON(http.StatusOK, dto.ToRoleResponseList(roles))
 }
 
 // CreateRole godoc
 // @Summary Create a new role
 // @Tags Auth - Admin
 // @Security BearerAuth
-// @Param role body map[string]string true "Role name"
-// @Success 201 {object} map[string]string
+// @Param role body dto.CreateRoleRequest true "Role payload"
+// @Success 201 {object} dto.MessageResponse
 // @Router /v1/admin/roles [post]
 func (h *AdminHandler) CreateRole(c echo.Context) error {
-	var req map[string]string
-	if err := c.Bind(&req); err != nil || req["name"] == "" {
+	var req dto.CreateRoleRequest
+	if err := c.Bind(&req); err != nil || req.Name == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid role name"})
 	}
-	// permissionIDs can be extracted from body if needed
-	if err := h.CreateRoleUC.Execute(req["name"], nil); err != nil {
+	if err := h.CreateRoleUC.Execute(req.Name, req.PermissionIDs); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusCreated, map[string]string{"message": "role created"})
+	return c.JSON(http.StatusCreated, dto.MessageResponse{Message: "role created"})
 }
 
 // DeleteRole godoc
@@ -59,7 +59,7 @@ func (h *AdminHandler) CreateRole(c echo.Context) error {
 // @Tags Auth - Admin
 // @Security BearerAuth
 // @Param name path string true "Role name"
-// @Success 204 {object} map[string]string
+// @Success 204
 // @Router /v1/admin/roles/{name} [delete]
 func (h *AdminHandler) DeleteRole(c echo.Context) error {
 	name := c.Param("name")
@@ -73,32 +73,32 @@ func (h *AdminHandler) DeleteRole(c echo.Context) error {
 // @Summary List all permissions
 // @Tags Auth - Admin
 // @Security BearerAuth
-// @Success 200 {array} map[string]interface{}
+// @Success 200 {array} dto.PermissionResponse
 // @Router /v1/admin/permissions [get]
 func (h *AdminHandler) ListPermissions(c echo.Context) error {
 	perms, err := h.ListPermissionsUC.Execute()
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusOK, perms)
+	return c.JSON(http.StatusOK, dto.ToPermissionResponseList(perms))
 }
 
 // CreatePermission godoc
 // @Summary Create a new permission
 // @Tags Auth - Admin
 // @Security BearerAuth
-// @Param permission body map[string]string true "Permission name"
-// @Success 201 {object} map[string]string
+// @Param permission body dto.CreatePermissionRequest true "Permission payload"
+// @Success 201 {object} dto.MessageResponse
 // @Router /v1/admin/permissions [post]
 func (h *AdminHandler) CreatePermission(c echo.Context) error {
-	var req map[string]string
-	if err := c.Bind(&req); err != nil || req["name"] == "" {
+	var req dto.CreatePermissionRequest
+	if err := c.Bind(&req); err != nil || req.Name == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid permission name"})
 	}
-	if err := h.CreatePermissionUC.Execute(req["name"]); err != nil {
+	if err := h.CreatePermissionUC.Execute(req.Name); err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusCreated, map[string]string{"message": "permission created"})
+	return c.JSON(http.StatusCreated, dto.MessageResponse{Message: "permission created"})
 }
 
 // DeletePermission godoc
@@ -106,7 +106,7 @@ func (h *AdminHandler) CreatePermission(c echo.Context) error {
 // @Tags Auth - Admin
 // @Security BearerAuth
 // @Param name path string true "Permission name"
-// @Success 204 {object} map[string]string
+// @Success 204
 // @Router /v1/admin/permissions/{name} [delete]
 func (h *AdminHandler) DeletePermission(c echo.Context) error {
 	name := c.Param("name")

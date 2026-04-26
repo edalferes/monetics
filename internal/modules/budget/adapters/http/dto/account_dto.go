@@ -69,3 +69,13 @@ type AccountBalanceResponse struct {
 	TotalExpense   float64         `json:"total_expense"`
 	TotalTransfers float64         `json:"total_transfers"`
 }
+
+// AccountTypePtr converts a string pointer to a domain.AccountType pointer.
+// Returns nil when the input is nil, so optional update fields propagate untouched.
+func AccountTypePtr(t *string) *domain.AccountType {
+	if t == nil {
+		return nil
+	}
+	at := domain.AccountType(*t)
+	return &at
+}

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"github.com/edalferes/monetics/internal/modules/auth/domain"
 	"github.com/edalferes/monetics/internal/modules/auth/errors"
 	"github.com/edalferes/monetics/internal/modules/auth/usecase/interfaces"
 	"github.com/edalferes/monetics/pkg/logger"
@@ -23,6 +24,11 @@ func NewChangePasswordUseCase(userRepo interfaces.User, passwordService interfac
 // Execute changes the user's password after verifying the current password
 func (u *ChangePasswordUseCase) Execute(userID uint, currentPassword, newPassword string) error {
 	u.logger.Debug().Uint("user_id", userID).Msg("changing password")
+
+	if err := domain.DefaultPasswordPolicy().Validate(newPassword); err != nil {
+		u.logger.Warn().Err(err).Uint("user_id", userID).Msg("password change failed: weak password")
+		return err
+	}
 
 	// Find the user
 	user, err := u.UserRepo.FindByID(userID)

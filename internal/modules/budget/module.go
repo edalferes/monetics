@@ -4,6 +4,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 
+	"github.com/edalferes/monetics/internal/config"
 	"github.com/edalferes/monetics/internal/modules/auth"
 	"github.com/edalferes/monetics/internal/modules/budget/adapters/http/handlers"
 	"github.com/edalferes/monetics/internal/modules/budget/adapters/repository"
@@ -18,7 +19,8 @@ import (
 
 // Module represents the budget module
 type Module struct {
-	db *gorm.DB
+	db  *gorm.DB
+	cfg *config.Config
 
 	// Repositories
 	accountRepo     interfaces.AccountRepository
@@ -67,10 +69,12 @@ type Module struct {
 	reportHandler      *handlers.ReportHandler
 }
 
-// NewModule creates a new budget module instance
-func NewModule(db *gorm.DB, log logger.Logger) *Module {
+// NewModule creates a new budget module instance using the standard
+// (db, cfg, log) constructor signature.
+func NewModule(db *gorm.DB, cfg *config.Config, log logger.Logger) *Module {
 	module := &Module{
-		db: db,
+		db:  db,
+		cfg: cfg,
 	}
 
 	// Initialize repositories
@@ -223,12 +227,10 @@ func (m *Module) RegisterRoutes(api *echo.Group, authMiddleware echo.MiddlewareF
 	reports.GET("/monthly", m.reportHandler.GetMonthlyReport)
 }
 
-// WireUp initializes and registers the budget module
-func WireUp(group *echo.Group, db *gorm.DB, jwtSecret string, log logger.Logger) {
-	log.Info().Msg("Initializing budget module")
-
-	module := NewModule(db, log)
-	authMiddleware := auth.JWTMiddleware(jwtSecret)
+// WireUp initializes and registers the budget module.
+func WireUp(group *echo.Group, db *gorm.DB, cfg *config.Config, log logger.Logger) {
+	module := NewModule(db, cfg, log)
+	authMiddleware := auth.JWTMiddleware(cfg.JWT.Secret)
 	module.RegisterRoutes(group, authMiddleware)
 
 	log.Info().Msg("Budget module initialized")

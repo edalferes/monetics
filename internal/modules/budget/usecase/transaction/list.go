@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"github.com/edalferes/monetics/internal/modules/budget/domain"
-	"github.com/edalferes/monetics/internal/modules/budget/helpers"
 	"github.com/edalferes/monetics/internal/modules/budget/usecase/interfaces"
 	"github.com/edalferes/monetics/pkg/logger"
+	"github.com/edalferes/monetics/pkg/timex"
 )
 
 type ListUseCase struct {
@@ -71,7 +71,7 @@ func (uc *ListUseCase) Execute(ctx context.Context, input ListInput) (ListOutput
 	// Parse date filters if provided
 	var startDate, endDate *time.Time
 	if input.StartDate != nil {
-		parsed, err := helpers.ParseFlexibleDate(*input.StartDate)
+		parsed, err := timex.ParseFlexibleDate(*input.StartDate)
 		if err != nil {
 			uc.logger.Error().Err(err).Str("start_date", *input.StartDate).Msg("failed to parse start_date")
 			return ListOutput{}, err
@@ -79,7 +79,7 @@ func (uc *ListUseCase) Execute(ctx context.Context, input ListInput) (ListOutput
 		startDate = &parsed
 	}
 	if input.EndDate != nil {
-		parsed, err := helpers.ParseFlexibleDate(*input.EndDate)
+		parsed, err := timex.ParseFlexibleDate(*input.EndDate)
 		if err != nil {
 			uc.logger.Error().Err(err).Str("end_date", *input.EndDate).Msg("failed to parse end_date")
 			return ListOutput{}, err

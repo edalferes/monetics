@@ -140,6 +140,11 @@ func (m *MockTransactionRepository) Create(ctx context.Context, transaction doma
 	return args.Get(0).(domain.Transaction), args.Error(1)
 }
 
+func (m *MockTransactionRepository) CreateTransfer(ctx context.Context, debit, credit domain.Transaction) (domain.Transaction, domain.Transaction, error) {
+	args := m.Called(ctx, debit, credit)
+	return args.Get(0).(domain.Transaction), args.Get(1).(domain.Transaction), args.Error(2)
+}
+
 func (m *MockTransactionRepository) GetByID(ctx context.Context, id uint) (domain.Transaction, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {

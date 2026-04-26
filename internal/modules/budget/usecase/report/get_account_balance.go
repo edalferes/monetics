@@ -3,9 +3,9 @@ package report
 import (
 	"context"
 
-	"github.com/edalferes/monetics/internal/modules/budget/usecase/interfaces"
 	"github.com/edalferes/monetics/internal/modules/budget/domain"
 	"github.com/edalferes/monetics/internal/modules/budget/errors"
+	"github.com/edalferes/monetics/internal/modules/budget/usecase/interfaces"
 )
 
 // GetAccountBalanceUseCase handles getting account with calculated balance
@@ -53,7 +53,11 @@ func (uc *GetAccountBalanceUseCase) Execute(ctx context.Context, userID uint, ac
 		return AccountBalanceOutput{}, err
 	}
 
-	// Calculate balance
+	// Calculate balance.
+	// Transfers are persisted as a debit/credit pair (RN-T3): the debit row has
+	// AccountID=source and DestinationAccountID set; the credit row has
+	// AccountID=destination and ParentID set. Each row affects only its own
+	// AccountID, so the loop simply applies the sign based on the row kind.
 	var totalIncome, totalExpense, totalTransfers float64
 	for _, tx := range transactions {
 		switch tx.Type {
@@ -62,17 +66,15 @@ func (uc *GetAccountBalanceUseCase) Execute(ctx context.Context, userID uint, ac
 		case domain.TransactionTypeExpense:
 			totalExpense += tx.Amount
 		case domain.TransactionTypeTransfer:
-			// If this account is the source, it's a debit
-			if tx.AccountID == accountID {
+			if tx.ParentID != nil {
+				// Credit row: incoming transfer.
+				totalTransfers += tx.Amount
+			} else {
+				// Debit row: outgoing transfer (plus optional fee).
 				totalTransfers -= tx.Amount
-				// Include transfer fee if applicable
 				if tx.TransferFee != nil {
 					totalTransfers -= *tx.TransferFee
 				}
-			}
-			// If this account is the destination, it's a credit
-			if tx.DestinationAccountID != nil && *tx.DestinationAccountID == accountID {
-				totalTransfers += tx.Amount
 			}
 		}
 	}

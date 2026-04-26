@@ -81,5 +81,5 @@ func (h *LoginHandler) Login(c echo.Context) error {
 	}
 
 	h.Logger.Info().Str("username", input.Username).Str("ip", ip).Msg("successful login")
-	return c.JSON(http.StatusOK, map[string]string{"token": token})
+	return c.JSON(http.StatusOK, dto.LoginResponse{Token: token})
 }

@@ -2,68 +2,49 @@ package domain
 
 import "time"
 
-// BudgetPeriod represents the budget period type
+// BudgetPeriod represents the budget period type.
 type BudgetPeriod string
 
 const (
-	BudgetPeriodDaily     BudgetPeriod = "daily"     // Diário
-	BudgetPeriodWeekly    BudgetPeriod = "weekly"    // Semanal
-	BudgetPeriodMonthly   BudgetPeriod = "monthly"   // Mensal
-	BudgetPeriodQuarterly BudgetPeriod = "quarterly" // Trimestral
-	BudgetPeriodYearly    BudgetPeriod = "yearly"    // Annual
-	BudgetPeriodCustom    BudgetPeriod = "custom"    // Personalizado
+	BudgetPeriodDaily     BudgetPeriod = "daily"
+	BudgetPeriodWeekly    BudgetPeriod = "weekly"
+	BudgetPeriodMonthly   BudgetPeriod = "monthly"
+	BudgetPeriodQuarterly BudgetPeriod = "quarterly"
+	BudgetPeriodYearly    BudgetPeriod = "yearly"
+	BudgetPeriodCustom    BudgetPeriod = "custom"
 )
 
-// Budget represents a budget plan for a category
-//
-// Budgets help users set spending limits for categories over time periods.
-// They enable tracking of planned vs actual spending.
+// Budget represents a budget plan for a category.
 //
 // Business rules:
-//   - Each budget must belong to a user and category
-//   - Amount must be positive
-//   - Period dates must be valid (start before end)
-//   - Cannot have overlapping budgets for same category
-//   - Spent amount is calculated from transactions
-//
-// Example:
-//
-//	budget := &Budget{
-//		UserID:     1,
-//		CategoryID: 5,
-//		Name:       "Orçamento Alimentação Janeiro",
-//		Amount:     2000.00,
-//		Period:     BudgetPeriodMonthly,
-//		StartDate:  time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),
-//		EndDate:    time.Date(2025, 1, 31, 23, 59, 59, 0, time.UTC),
-//	}
+//   - Each budget must belong to a user and category.
+//   - Amount must be positive.
+//   - Period dates must be valid (start before end).
+//   - No overlapping budgets for the same (user, category).
+//   - Spent amount is calculated from completed expense transactions.
 type Budget struct {
-	ID          uint         `json:"id" gorm:"primaryKey"`
-	UserID      uint         `json:"user_id" gorm:"not null;index:idx_user_budgets;constraint:OnDelete:CASCADE"`
-	CategoryID  uint         `json:"category_id" gorm:"not null;index:idx_category_budgets"`
-	Name        string       `json:"name" gorm:"not null;size:200"`
-	Amount      float64      `json:"amount" gorm:"type:decimal(15,2);not null"`
-	Spent       float64      `json:"spent" gorm:"type:decimal(15,2);default:0"`
-	Period      BudgetPeriod `json:"period" gorm:"not null;size:20"`
-	StartDate   time.Time    `json:"start_date" gorm:"not null;index:idx_budget_period"`
-	EndDate     time.Time    `json:"end_date" gorm:"not null;index:idx_budget_period"`
-	AlertAt     *float64     `json:"alert_at,omitempty" gorm:"type:decimal(5,2)"`
-	IsActive    bool         `json:"is_active" gorm:"default:true"`
-	Description string       `json:"description,omitempty" gorm:"type:text"`
-	CreatedAt   time.Time    `json:"created_at"`
-	UpdatedAt   time.Time    `json:"updated_at"`
+	ID          uint
+	UserID      uint
+	CategoryID  uint
+	Name        string
+	Amount      float64
+	Spent       float64
+	Period      BudgetPeriod
+	StartDate   time.Time
+	EndDate     time.Time
+	AlertAt     *float64
+	IsActive    bool
+	Description string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
-func (Budget) TableName() string {
-	return "budget_budgets"
-}
-
-// RemainingAmount returns how much budget is left
+// RemainingAmount returns how much budget is left.
 func (b *Budget) RemainingAmount() float64 {
 	return b.Amount - b.Spent
 }
 
-// PercentageUsed returns the percentage of budget used
+// PercentageUsed returns the percentage of budget used.
 func (b *Budget) PercentageUsed() float64 {
 	if b.Amount == 0 {
 		return 0
@@ -71,15 +52,23 @@ func (b *Budget) PercentageUsed() float64 {
 	return (b.Spent / b.Amount) * 100
 }
 
-// IsOverBudget checks if spending exceeded the budget
+// IsOverBudget reports whether spending exceeded the budget amount.
 func (b *Budget) IsOverBudget() bool {
 	return b.Spent > b.Amount
 }
 
-// ShouldAlert checks if alert threshold is reached
+// ShouldAlert reports whether the alert threshold is reached.
 func (b *Budget) ShouldAlert() bool {
 	if b.AlertAt == nil {
 		return false
 	}
 	return b.PercentageUsed() >= *b.AlertAt
+}
+
+// Overlaps reports whether two budgets overlap in time for the same user/category.
+func (b *Budget) Overlaps(other *Budget) bool {
+	if b.UserID != other.UserID || b.CategoryID != other.CategoryID {
+		return false
+	}
+	return b.StartDate.Before(other.EndDate) && other.StartDate.Before(b.EndDate)
 }

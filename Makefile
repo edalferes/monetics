@@ -7,18 +7,21 @@ GOTEST=$(GOCMD) test
 BINARY_NAME=./bin/monetics
 CMD_PATH=./cmd/api
 
-.PHONY: help build test clean run docker-build swagger lint
+.PHONY: help build test test-integration cover clean run docker-build swagger lint mocks
 
 ## Help
 help: ## Show available commands
 	@echo 'Available commands:'
-	@echo '  build         - Build the application'
-	@echo '  test          - Run tests'
-	@echo '  run           - Run the application'
-	@echo '  clean         - Clean build artifacts'
-	@echo '  docker-build  - Build Docker image'
-	@echo '  swagger       - Generate Swagger documentation'
-	@echo '  lint          - Run golangci-lint'
+	@echo '  build             - Build the application'
+	@echo '  test              - Run unit tests'
+	@echo '  test-integration  - Run integration tests (build tag: integration)'
+	@echo '  cover             - Run tests with coverage report'
+	@echo '  run               - Run the application'
+	@echo '  clean             - Clean build artifacts'
+	@echo '  docker-build      - Build Docker image'
+	@echo '  swagger           - Generate Swagger documentation'
+	@echo '  lint              - Run golangci-lint'
+	@echo '  mocks             - Regenerate testify mocks (mockery)'
 
 ## Build
 build: ## Build the application
