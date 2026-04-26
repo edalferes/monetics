@@ -3,6 +3,7 @@ package transaction
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/edalferes/monetics/internal/modules/budget/domain"
 	"github.com/edalferes/monetics/internal/modules/budget/errors"
@@ -151,7 +152,7 @@ func (uc *ImportCSVUseCase) Execute(ctx context.Context, input ImportInput) (Imp
 			Description: item.Description,
 			Date:        date,
 			Month:       date.Format("2006-01"),
-			Status:      domain.TransactionStatusCompleted,
+			Status:      domain.ResolveStatus(date, time.Now()),
 		}
 
 		_, err = uc.transactionRepo.Create(ctx, tx)

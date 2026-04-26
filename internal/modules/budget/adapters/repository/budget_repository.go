@@ -110,7 +110,11 @@ func (r *BudgetRepository) UpdateSpentAtomic(ctx context.Context, budgetID uint,
 		Model(&model.BudgetModel{}).
 		Where("id = ?", budgetID).
 		Update("spent", r.db.Raw(
-			"COALESCE((SELECT SUM(amount) FROM budget_transactions WHERE category_id = ? AND type = ? AND date BETWEEN ? AND ? AND status = ?), 0)",
-			categoryID, string(domain.TransactionTypeExpense), startDate, endDate, string(domain.TransactionStatusCompleted),
+			// Status is derived from `date`: a future-dated transaction is
+			// considered pending. Filter by `date <= NOW()` so future entries
+			// inside the budget window are not counted as spent yet, and skip
+			// cancelled rows.
+			"COALESCE((SELECT SUM(amount) FROM budget_transactions WHERE category_id = ? AND type = ? AND date BETWEEN ? AND ? AND date <= NOW() AND status <> ?), 0)",
+			categoryID, string(domain.TransactionTypeExpense), startDate, endDate, string(domain.TransactionStatusCancelled),
 		)).Error
 }

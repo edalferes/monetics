@@ -133,6 +133,11 @@ func (uc *UpdateUseCase) Execute(ctx context.Context, input UpdateInput) (domain
 		}
 		tx.Date = parsedDate
 		tx.Month = parsedDate.Format("2006-01")
+		// Recompute status from the new date so it stays consistent with the
+		// domain rule (future date = pending, otherwise completed).
+		if tx.Status != domain.TransactionStatusCancelled {
+			tx.Status = domain.ResolveStatus(parsedDate, time.Now())
+		}
 	}
 
 	// Track categories that need budget recalculation
