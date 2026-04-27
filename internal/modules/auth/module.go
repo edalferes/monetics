@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
 
+	"github.com/edalferes/monetics/internal/config"
 	"github.com/edalferes/monetics/internal/modules/auth/adapters/crypto"
 	"github.com/edalferes/monetics/internal/modules/auth/adapters/http/handlers"
 	"github.com/edalferes/monetics/internal/modules/auth/adapters/repository"
@@ -42,14 +43,17 @@ type Module struct {
 	userHandler          *handlers.UserHandler
 }
 
-func NewModule(db *gorm.DB, jwtSecret string, jwtExpiryHours int, log logger.Logger) *Module {
+// NewModule constructs the auth module. The standard signature (db, cfg, log) keeps
+// composition consistent across modules.
+func NewModule(db *gorm.DB, cfg *config.Config, log logger.Logger) *Module {
+	jwtSecret := cfg.JWT.Secret
 	userRepo := repository.NewUserRepository(db)
 	roleRepo := repository.NewRoleRepository(db)
 	permRepo := repository.NewPermissionRepository(db)
 	auditLogRepo := repository.NewAuditLogRepository(db)
 
 	passwordService := crypto.NewBcryptPasswordService()
-	jwtService := token.NewJWTService(jwtSecret, time.Duration(jwtExpiryHours)*time.Hour)
+	jwtService := token.NewJWTService(jwtSecret, time.Duration(cfg.JWT.ExpiryHour)*time.Hour)
 	auditService := audit.NewAuditService(auditLogRepo)
 
 	// Use Cases
@@ -161,9 +165,9 @@ func (m *Module) RegisterRoutes(group *echo.Group) {
 	userGroup.PUT("/password", m.userHandler.ChangePassword)
 }
 
-func WireUp(group *echo.Group, db *gorm.DB, jwtSecret string, jwtExpiryHours int, log logger.Logger) {
-	log.Info().Msg("Initializing Auth module...")
-	module := NewModule(db, jwtSecret, jwtExpiryHours, log)
+// WireUp initializes and registers the auth module.
+func WireUp(group *echo.Group, db *gorm.DB, cfg *config.Config, log logger.Logger) {
+	module := NewModule(db, cfg, log)
 	module.RegisterRoutes(group)
 	log.Info().Msg("Auth module started successfully")
 }

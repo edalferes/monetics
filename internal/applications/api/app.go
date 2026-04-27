@@ -10,6 +10,7 @@ import (
 
 	"github.com/edalferes/monetics/internal/config"
 	"github.com/edalferes/monetics/internal/infra/db"
+	"github.com/edalferes/monetics/internal/infra/security"
 	"github.com/edalferes/monetics/internal/infra/validator"
 	"github.com/edalferes/monetics/internal/modules/auth"
 	"github.com/edalferes/monetics/internal/modules/budget"
@@ -95,6 +96,15 @@ func initEcho() *echo.Echo {
 	e.HideBanner = true
 	e.HidePort = true
 
+	// Security headers (RN-S1)
+	e.Use(security.SecureHeaders())
+
+	// Per-IP rate limit (RN-S2): default 50 req/s with burst of 100.
+	e.Use(security.RateLimiter(security.RateLimiterConfig{
+		RequestsPerSecond: 50,
+		Burst:             100,
+	}))
+
 	// Configure CORS middleware
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     []string{"*"},
@@ -112,21 +122,16 @@ func (a *App) RegisterModules() {
 	v1 := a.echo.Group("/v1")
 
 	// Register auth module (no dependencies)
-	auth.WireUp(v1, a.db, a.config.JWT.Secret, a.config.JWT.ExpiryHour, a.logger)
+	auth.WireUp(v1, a.db, a.config, a.logger)
 
 	// Register budget module (depends on auth)
-	budget.WireUp(v1, a.db, a.config.JWT.Secret, a.logger)
+	budget.WireUp(v1, a.db, a.config, a.logger)
 }
 
 func (a *App) RegisterGlobalRoutes() {
 	// K8s probes
 	a.echo.GET("/health", a.LivenessHandler)
 	a.echo.GET("/ready", a.ReadinessHandler)
-
-	// metrics endpoint (placeholder) #TODO: implement metrics collection
-	a.echo.GET("/metrics", func(c echo.Context) error {
-		return c.String(200, "metrics: not implemented")
-	})
 
 	// Swagger docs
 	a.echo.GET("/swagger/*", echoSwagger.WrapHandler)

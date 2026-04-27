@@ -140,6 +140,11 @@ func (m *MockTransactionRepository) Create(ctx context.Context, transaction doma
 	return args.Get(0).(domain.Transaction), args.Error(1)
 }
 
+func (m *MockTransactionRepository) CreateTransfer(ctx context.Context, debit, credit domain.Transaction) (domain.Transaction, domain.Transaction, error) {
+	args := m.Called(ctx, debit, credit)
+	return args.Get(0).(domain.Transaction), args.Get(1).(domain.Transaction), args.Error(2)
+}
+
 func (m *MockTransactionRepository) GetByID(ctx context.Context, id uint) (domain.Transaction, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -198,6 +203,11 @@ func (m *MockTransactionRepository) Delete(ctx context.Context, id uint) error {
 func (m *MockTransactionRepository) ExistsByID(ctx context.Context, id uint) (bool, error) {
 	args := m.Called(ctx, id)
 	return args.Bool(0), args.Error(1)
+}
+
+func (m *MockTransactionRepository) GetTransferPair(ctx context.Context, id uint) (domain.Transaction, bool, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(domain.Transaction), args.Bool(1), args.Error(2)
 }
 
 func (m *MockTransactionRepository) GetByCategoryID(ctx context.Context, categoryID uint) ([]domain.Transaction, error) {

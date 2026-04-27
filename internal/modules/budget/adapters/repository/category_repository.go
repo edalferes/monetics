@@ -5,65 +5,71 @@ import (
 
 	"gorm.io/gorm"
 
+	"github.com/edalferes/monetics/internal/modules/budget/adapters/repository/model"
 	"github.com/edalferes/monetics/internal/modules/budget/domain"
 	"github.com/edalferes/monetics/internal/modules/budget/usecase/interfaces"
 )
 
+// CategoryRepository is a GORM-backed implementation of interfaces.CategoryRepository.
 type CategoryRepository struct {
 	db *gorm.DB
 }
 
-// NewCategoryRepository creates a new GORM-based category repository
 func NewCategoryRepository(db *gorm.DB) interfaces.CategoryRepository {
-	return &CategoryRepository{
-		db: db,
-	}
+	return &CategoryRepository{db: db}
 }
 
 func (r *CategoryRepository) Create(ctx context.Context, category domain.Category) (domain.Category, error) {
-	if err := r.db.WithContext(ctx).Create(&category).Error; err != nil {
+	m := model.CategoryFromDomain(category)
+	if err := r.db.WithContext(ctx).Create(&m).Error; err != nil {
 		return domain.Category{}, err
 	}
-	return category, nil
+	return m.ToDomain(), nil
 }
 
 func (r *CategoryRepository) GetByID(ctx context.Context, id uint) (domain.Category, error) {
-	var category domain.Category
-	if err := r.db.WithContext(ctx).First(&category, id).Error; err != nil {
+	var m model.CategoryModel
+	if err := r.db.WithContext(ctx).First(&m, id).Error; err != nil {
 		return domain.Category{}, err
 	}
-	return category, nil
+	return m.ToDomain(), nil
 }
 
 func (r *CategoryRepository) GetByUserID(ctx context.Context, userID uint) ([]domain.Category, error) {
-	var categories []domain.Category
-	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&categories).Error; err != nil {
+	var ms []model.CategoryModel
+	if err := r.db.WithContext(ctx).Where("user_id = ?", userID).Find(&ms).Error; err != nil {
 		return nil, err
 	}
-	return categories, nil
+	return model.CategoryModelsToDomain(ms), nil
 }
 
 func (r *CategoryRepository) GetByType(ctx context.Context, userID uint, categoryType domain.CategoryType) ([]domain.Category, error) {
-	var categories []domain.Category
-	if err := r.db.WithContext(ctx).Where("user_id = ? AND type = ?", userID, string(categoryType)).Find(&categories).Error; err != nil {
+	var ms []model.CategoryModel
+	if err := r.db.WithContext(ctx).
+		Where("user_id = ? AND type = ?", userID, string(categoryType)).
+		Find(&ms).Error; err != nil {
 		return nil, err
 	}
-	return categories, nil
+	return model.CategoryModelsToDomain(ms), nil
 }
 
 func (r *CategoryRepository) Update(ctx context.Context, category domain.Category) (domain.Category, error) {
-	if err := r.db.WithContext(ctx).Save(&category).Error; err != nil {
+	m := model.CategoryFromDomain(category)
+	if err := r.db.WithContext(ctx).Save(&m).Error; err != nil {
 		return domain.Category{}, err
 	}
-	return category, nil
+	return m.ToDomain(), nil
 }
 
 func (r *CategoryRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&domain.Category{}, id).Error
+	return r.db.WithContext(ctx).Delete(&model.CategoryModel{}, id).Error
 }
 
 func (r *CategoryRepository) ExistsByID(ctx context.Context, id uint) (bool, error) {
 	var count int64
-	err := r.db.WithContext(ctx).Model(&domain.Category{}).Where("id = ?", id).Count(&count).Error
+	err := r.db.WithContext(ctx).
+		Model(&model.CategoryModel{}).
+		Where("id = ?", id).
+		Count(&count).Error
 	return count > 0, err
 }

@@ -57,9 +57,7 @@ func (l *Loader) Load(opts ...LoadOptions) (*Config, error) {
 	// This ensures environment variables have higher priority than config file
 	l.viper.AutomaticEnv()
 	l.viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-
-	// Bind legacy environment variable names for backward compatibility
-	l.bindLegacyEnvVars()
+	l.bindEnvs()
 
 	// Try to read configuration file (optional)
 	if err := l.viper.ReadInConfig(); err != nil {
@@ -80,6 +78,12 @@ func (l *Loader) Load(opts ...LoadOptions) (*Config, error) {
 	return &config, nil
 }
 
+func (l *Loader) bindEnvs() {
+	for _, key := range l.viper.AllKeys() {
+		_ = l.viper.BindEnv(key)
+	}
+}
+
 // setDefaults sets default values
 func (l *Loader) setDefaults() {
 	// App defaults
@@ -88,48 +92,36 @@ func (l *Loader) setDefaults() {
 	l.viper.SetDefault("app.environment", "development")
 	l.viper.SetDefault("app.port", 8080)
 
-	// Database defaults
-	l.viper.SetDefault("database.host", "localhost")
-	l.viper.SetDefault("database.port", 5432)
-	l.viper.SetDefault("database.ssl_mode", "disable")
-
-	// JWT defaults
-	l.viper.SetDefault("jwt.expiry_hour", 24)
-
 	// Logger defaults
 	l.viper.SetDefault("logger.level", "info")
 	l.viper.SetDefault("logger.format", "json")
 
+	// Database defaults
+	l.viper.SetDefault("database.host", "localhost")
+	l.viper.SetDefault("database.port", 5432)
+	l.viper.SetDefault("database.user", "postgres")
+	l.viper.SetDefault("database.password", "")
+	l.viper.SetDefault("database.name", "monetics")
+	l.viper.SetDefault("database.ssl_mode", "disable")
+
+	// JWT defaults
+	l.viper.SetDefault("jwt.secret", "")
+	l.viper.SetDefault("jwt.expiry_hour", 24)
+
 	// Admin user defaults
 	l.viper.SetDefault("admin.username", "admin")
 	l.viper.SetDefault("admin.password", "root123")
-}
 
-// bindLegacyEnvVars binds legacy environment variable names for backward compatibility
-func (l *Loader) bindLegacyEnvVars() {
-	// Map DB_* to database.*
-	l.viper.BindEnv("database.host", "DB_HOST")
-	l.viper.BindEnv("database.port", "DB_PORT")
-	l.viper.BindEnv("database.user", "DB_USER")
-	l.viper.BindEnv("database.password", "DB_PASSWORD")
-	l.viper.BindEnv("database.name", "DB_NAME")
-	l.viper.BindEnv("database.ssl_mode", "DB_SSL_MODE")
-
-	// Map APP_* and direct vars
-	l.viper.BindEnv("app.name", "APP_NAME")
-	l.viper.BindEnv("app.port", "PORT")
-	l.viper.BindEnv("app.environment", "APP_ENVIRONMENT", "ENVIRONMENT")
-	l.viper.BindEnv("app.version", "APP_VERSION")
-
-	// Map JWT_*
-	l.viper.BindEnv("jwt.secret", "JWT_SECRET")
-	l.viper.BindEnv("jwt.expiry_hour", "JWT_EXPIRY_HOUR")
-
-	// Map LOG_*
-	l.viper.BindEnv("logger.level", "LOG_LEVEL")
-	l.viper.BindEnv("logger.format", "LOG_FORMAT")
-
-	// Map ADMIN_*
-	l.viper.BindEnv("admin.username", "ADMIN_USERNAME")
-	l.viper.BindEnv("admin.password", "ADMIN_PASSWORD")
+	// AI defaults (disabled by default)
+	l.viper.SetDefault("ai.enabled", false)
+	l.viper.SetDefault("ai.provider", "openai")
+	l.viper.SetDefault("ai.api_key", "")
+	l.viper.SetDefault("ai.model", "gpt-4o-mini")
+	l.viper.SetDefault("ai.base_url", "https://api.openai.com/v1")
+	l.viper.SetDefault("ai.timeout_seconds", 60)
+	l.viper.SetDefault("ai.max_items_per_request", 500)
+	l.viper.SetDefault("ai.min_confidence", 0.4)
+	l.viper.SetDefault("ai.history_lookback_days", 90)
+	l.viper.SetDefault("ai.history_max_examples", 20)
+	l.viper.SetDefault("ai.rate_limit_per_minute", 10)
 }

@@ -3,12 +3,13 @@ package transaction
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/edalferes/monetics/internal/modules/budget/domain"
 	"github.com/edalferes/monetics/internal/modules/budget/errors"
-	"github.com/edalferes/monetics/internal/modules/budget/helpers"
 	"github.com/edalferes/monetics/internal/modules/budget/usecase/interfaces"
 	"github.com/edalferes/monetics/pkg/logger"
+	"github.com/edalferes/monetics/pkg/timex"
 )
 
 // ImportItem represents a single transaction to import
@@ -124,7 +125,7 @@ func (uc *ImportCSVUseCase) Execute(ctx context.Context, input ImportInput) (Imp
 			continue
 		}
 
-		date, err := helpers.ParseFlexibleDate(item.Date)
+		date, err := timex.ParseFlexibleDate(item.Date)
 		if err != nil {
 			result.Errors = append(result.Errors, ImportError{
 				Row:     rowNum,
@@ -151,7 +152,7 @@ func (uc *ImportCSVUseCase) Execute(ctx context.Context, input ImportInput) (Imp
 			Description: item.Description,
 			Date:        date,
 			Month:       date.Format("2006-01"),
-			Status:      domain.TransactionStatusCompleted,
+			Status:      domain.ResolveStatus(date, time.Now()),
 		}
 
 		_, err = uc.transactionRepo.Create(ctx, tx)

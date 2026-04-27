@@ -10,6 +10,10 @@ import (
 // TransactionRepository defines the contract for transaction persistence operations
 type TransactionRepository interface {
 	Create(ctx context.Context, transaction domain.Transaction) (domain.Transaction, error)
+	// CreateTransfer atomically persists a debit/credit pair representing a
+	// single transfer. The credit's ParentID is set to the debit's ID by the
+	// implementation. Both records share the same Date.
+	CreateTransfer(ctx context.Context, debit, credit domain.Transaction) (domain.Transaction, domain.Transaction, error)
 	GetByID(ctx context.Context, id uint) (domain.Transaction, error)
 	GetByUserID(ctx context.Context, userID uint) ([]domain.Transaction, error)
 	GetByUserIDPaginated(ctx context.Context, userID uint, limit, offset int) ([]domain.Transaction, error)
@@ -25,4 +29,10 @@ type TransactionRepository interface {
 	Update(ctx context.Context, transaction domain.Transaction) (domain.Transaction, error)
 	Delete(ctx context.Context, id uint) error
 	ExistsByID(ctx context.Context, id uint) (bool, error)
+	// GetTransferPair returns the paired row of a transfer transaction.
+	// If the input is the debit row (ParentID == nil) it returns the credit row
+	// (the row whose ParentID == id). If it is the credit row (ParentID != nil)
+	// it returns the debit row (the row with id == *ParentID).
+	// Returns (zero, false, nil) when no pair exists; (zero, false, err) on error.
+	GetTransferPair(ctx context.Context, id uint) (domain.Transaction, bool, error)
 }

@@ -26,3 +26,18 @@ logger:
 admin:
   username: "admin" # Set via ADMIN_USERNAME env var
   password: "change_me" # Set via ADMIN_PASSWORD env var
+
+# AI-assisted features (smart CSV import categorization).
+# Disabled by default. To enable, set AI_ENABLED=true and provide AI_API_KEY.
+ai:
+  enabled: false              # AI_ENABLED
+  provider: "openai"          # AI_PROVIDER (only "openai" is supported today)
+  api_key: ""                 # AI_API_KEY — REQUIRED when enabled. Never commit real keys.
+  model: "gpt-4o-mini"        # AI_MODEL
+  base_url: "https://api.openai.com/v1" # AI_BASE_URL (override for proxies/Azure OpenAI compatible endpoints)
+  timeout_seconds: 60         # AI_TIMEOUT_SECONDS — HTTP timeout per request
+  max_items_per_request: 500  # AI_MAX_ITEMS_PER_REQUEST — hard cap on transactions per suggest call
+  min_confidence: 0.4         # AI_MIN_CONFIDENCE — suggestions below this become category_id=0
+  history_lookback_days: 90   # AI_HISTORY_LOOKBACK_DAYS — window of past transactions used as few-shot examples
+  history_max_examples: 20    # AI_HISTORY_MAX_EXAMPLES — max examples included in the prompt
+  rate_limit_per_minute: 10   # AI_RATE_LIMIT_PER_MINUTE — per-user soft cap (reserved for future use)

@@ -290,7 +290,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_responses.AuditLogResponse"
+                                "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.AuditLogResponse"
                             }
                         }
                     },
@@ -701,6 +701,25 @@ const docTemplate = `{
                 }
             }
         },
+        "/config/features": {
+            "get": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Config"
+                ],
+                "summary": "Get enabled feature flags",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.FeaturesResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/reports/monthly": {
             "get": {
                 "produces": [
@@ -767,13 +786,31 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Start date filter (RFC3339 format, e.g., 2025-02-01T00:00:00Z)",
+                        "description": "Transaction type filter (income, expense, transfer)",
+                        "name": "type",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Account ID filter",
+                        "name": "account_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Category ID filter",
+                        "name": "category_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start date filter (RFC3339 or YYYY-MM-DD format)",
                         "name": "start_date",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "End date filter (RFC3339 format, e.g., 2025-02-28T23:59:59Z)",
+                        "description": "End date filter (RFC3339 or YYYY-MM-DD format)",
                         "name": "end_date",
                         "in": "query"
                     }
@@ -818,6 +855,100 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/import": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Budget - Transactions"
+                ],
+                "summary": "Import transactions from CSV",
+                "parameters": [
+                    {
+                        "description": "Bulk import request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionsResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
+        "/transactions/import/ai-suggest": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Budget - Transactions"
+                ],
+                "summary": "Suggest categories for transactions using AI",
+                "parameters": [
+                    {
+                        "description": "Suggestion request",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "502": {
+                        "description": "Bad Gateway",
                         "schema": {
                             "type": "object",
                             "additionalProperties": true
@@ -974,8 +1105,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "object",
-                                "additionalProperties": true
+                                "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.PermissionResponse"
                             }
                         }
                     }
@@ -993,15 +1123,12 @@ const docTemplate = `{
                 "summary": "Create a new permission",
                 "parameters": [
                     {
-                        "description": "Permission name",
+                        "description": "Permission payload",
                         "name": "permission",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.CreatePermissionRequest"
                         }
                     }
                 ],
@@ -1009,10 +1136,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.MessageResponse"
                         }
                     }
                 }
@@ -1040,13 +1164,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
+                        "description": "No Content"
                     }
                 }
             }
@@ -1068,8 +1186,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "object",
-                                "additionalProperties": true
+                                "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.RoleResponse"
                             }
                         }
                     }
@@ -1087,15 +1204,12 @@ const docTemplate = `{
                 "summary": "Create a new role",
                 "parameters": [
                     {
-                        "description": "Role name",
+                        "description": "Role payload",
                         "name": "role",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.CreateRoleRequest"
                         }
                     }
                 ],
@@ -1103,10 +1217,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.MessageResponse"
                         }
                     }
                 }
@@ -1134,13 +1245,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "204": {
-                        "description": "No Content",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
+                        "description": "No Content"
                     }
                 }
             }
@@ -1623,48 +1728,6 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/test/protected": {
-            "get": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "tags": [
-                    "testmodule"
-                ],
-                "summary": "Protected endpoint for testing roles/permissions",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/v1/user/password": {
             "put": {
                 "security": [
@@ -1736,52 +1799,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.ChangePasswordDTO": {
-            "type": "object",
-            "required": [
-                "current_password",
-                "new_password"
-            ],
-            "properties": {
-                "current_password": {
-                    "type": "string"
-                },
-                "new_password": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.LoginDTO": {
-            "type": "object",
-            "required": [
-                "password",
-                "username"
-            ],
-            "properties": {
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.RegisterDTO": {
-            "type": "object",
-            "required": [
-                "password",
-                "username"
-            ],
-            "properties": {
-                "password": {
-                    "type": "string"
-                },
-                "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_responses.AuditLogResponse": {
+        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.AuditLogResponse": {
             "type": "object",
             "properties": {
                 "action": {
@@ -1807,6 +1825,115 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.ChangePasswordDTO": {
+            "type": "object",
+            "required": [
+                "current_password",
+                "new_password"
+            ],
+            "properties": {
+                "current_password": {
+                    "type": "string"
+                },
+                "new_password": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.CreatePermissionRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.CreateRoleRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "permission_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.LoginDTO": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.PermissionResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.RegisterDTO": {
+            "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
+            "properties": {
+                "password": {
+                    "type": "string"
+                },
+                "username": {
+                    "type": "string"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.RoleResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "permissions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.PermissionResponse"
+                    }
                 }
             }
         },
@@ -1844,6 +1971,9 @@ const docTemplate = `{
                 "id": {
                     "type": "integer"
                 },
+                "password": {
+                    "type": "string"
+                },
                 "roles": {
                     "type": "array",
                     "items": {
@@ -1852,6 +1982,37 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_budget_adapters_ai.CategorySuggestion": {
+            "type": "object",
+            "properties": {
+                "category_id": {
+                    "type": "integer"
+                },
+                "confidence": {
+                    "type": "number"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "row_index": {
+                    "type": "integer"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_budget_adapters_ai.Usage": {
+            "type": "object",
+            "properties": {
+                "completion_tokens": {
+                    "type": "integer"
+                },
+                "estimated_cost_usd": {
+                    "type": "number"
+                },
+                "prompt_tokens": {
+                    "type": "integer"
                 }
             }
         },
@@ -2074,9 +2235,6 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
-                "initial_balance": {
-                    "type": "number"
-                },
                 "name": {
                     "type": "string"
                 },
@@ -2085,7 +2243,7 @@ const docTemplate = `{
                     "enum": [
                         "checking",
                         "savings",
-                        "credit",
+                        "credit_card",
                         "cash",
                         "investment"
                     ]
@@ -2124,6 +2282,8 @@ const docTemplate = `{
                 "period": {
                     "type": "string",
                     "enum": [
+                        "daily",
+                        "weekly",
                         "monthly",
                         "quarterly",
                         "yearly",
@@ -2225,6 +2385,78 @@ const docTemplate = `{
                 }
             }
         },
+        "github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.FeaturesResponse": {
+            "type": "object",
+            "properties": {
+                "ai_import": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionItem": {
+            "type": "object",
+            "required": [
+                "amount",
+                "category_id",
+                "date",
+                "description"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category_id": {
+                    "type": "integer"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "expense",
+                        "income",
+                        "transfer"
+                    ]
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionsRequest": {
+            "type": "object",
+            "required": [
+                "account_id",
+                "transactions"
+            ],
+            "properties": {
+                "account_id": {
+                    "type": "integer"
+                },
+                "transactions": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionItem"
+                    }
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionsResponse": {
+            "type": "object",
+            "properties": {
+                "errors": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_budget_usecase_transaction.ImportError"
+                    }
+                },
+                "imported": {
+                    "type": "integer"
+                }
+            }
+        },
         "github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.MonthlyReportResponse": {
             "type": "object",
             "properties": {
@@ -2268,6 +2500,66 @@ const docTemplate = `{
                 },
                 "total_pages": {
                     "type": "integer"
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesItem": {
+            "type": "object",
+            "required": [
+                "amount",
+                "date",
+                "description"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "expense",
+                        "income",
+                        "transfer"
+                    ]
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesRequest": {
+            "type": "object",
+            "required": [
+                "account_id",
+                "items"
+            ],
+            "properties": {
+                "account_id": {
+                    "type": "integer"
+                },
+                "items": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesItem"
+                    }
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesResponse": {
+            "type": "object",
+            "properties": {
+                "suggestions": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_ai.CategorySuggestion"
+                    }
+                },
+                "usage": {
+                    "$ref": "#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_ai.Usage"
                 }
             }
         },
@@ -2379,9 +2671,9 @@ const docTemplate = `{
                     "enum": [
                         "checking",
                         "savings",
-                        "credit",
+                        "credit_card",
                         "cash",
-                        "invest"
+                        "investment"
                     ]
                 }
             }
@@ -2412,6 +2704,8 @@ const docTemplate = `{
                 "period": {
                     "type": "string",
                     "enum": [
+                        "daily",
+                        "weekly",
                         "monthly",
                         "quarterly",
                         "yearly",
@@ -2478,6 +2772,17 @@ const docTemplate = `{
                         "expense",
                         "transfer"
                     ]
+                }
+            }
+        },
+        "github_com_edalferes_monetics_internal_modules_budget_usecase_transaction.ImportError": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "row": {
+                    "type": "integer"
                 }
             }
         },

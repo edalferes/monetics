@@ -26,6 +26,11 @@ func NewRegisterUseCase(user interfaces.User, role interfaces.Role, passwordServ
 func (u *RegisterUseCase) Execute(username, password string) error {
 	u.logger.Debug().Str("username", username).Msg("registering new user")
 
+	if err := domain.DefaultPasswordPolicy().Validate(password); err != nil {
+		u.logger.Warn().Err(err).Str("username", username).Msg("registration failed: weak password")
+		return err
+	}
+
 	if user, _ := u.User.FindByUsername(username); user != nil {
 		u.logger.Warn().Str("username", username).Msg("registration failed: user already exists")
 		return errors.ErrUserAlreadyExists

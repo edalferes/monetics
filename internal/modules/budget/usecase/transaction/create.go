@@ -6,9 +6,9 @@ import (
 
 	"github.com/edalferes/monetics/internal/modules/budget/domain"
 	"github.com/edalferes/monetics/internal/modules/budget/errors"
-	"github.com/edalferes/monetics/internal/modules/budget/helpers"
 	"github.com/edalferes/monetics/internal/modules/budget/usecase/interfaces"
 	"github.com/edalferes/monetics/pkg/logger"
+	"github.com/edalferes/monetics/pkg/timex"
 )
 
 type CreateUseCase struct {
@@ -122,13 +122,59 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input CreateInput) (domain
 	}
 
 	// Parse date
-	date, err := helpers.ParseFlexibleDate(input.Date)
+	date, err := timex.ParseFlexibleDate(input.Date)
 	if err != nil {
 		uc.logger.Error().Err(err).Str("date", input.Date).Msg("invalid date format")
 		return domain.Transaction{}, errors.ErrInvalidDate
 	}
 
-	// Create the main transaction (debit from source account)
+	status := domain.ResolveStatus(date, time.Now())
+	month := date.Format("2006-01")
+
+	// Transfers are persisted as a debit/credit pair in a single DB transaction.
+	if input.Type == domain.TransactionTypeTransfer {
+		debit := domain.Transaction{
+			UserID:               input.UserID,
+			AccountID:            input.AccountID,
+			CategoryID:           input.CategoryID,
+			Type:                 domain.TransactionTypeTransfer,
+			Amount:               input.Amount,
+			Description:          input.Description,
+			Date:                 date,
+			Month:                month,
+			Status:               status,
+			DestinationAccountID: destinationAccountID,
+		}
+		credit := domain.Transaction{
+			UserID:               input.UserID,
+			AccountID:            *destinationAccountID,
+			CategoryID:           input.CategoryID,
+			Type:                 domain.TransactionTypeTransfer,
+			Amount:               input.Amount,
+			Description:          input.Description,
+			Date:                 date,
+			Month:                month,
+			Status:               status,
+			DestinationAccountID: &input.AccountID,
+		}
+
+		debitTx, _, err := uc.transactionRepo.CreateTransfer(ctx, debit, credit)
+		if err != nil {
+			uc.logger.Error().Err(err).
+				Uint("user_id", input.UserID).
+				Uint("account_id", input.AccountID).
+				Msg("failed to create transfer pair")
+			return domain.Transaction{}, err
+		}
+
+		uc.logger.Info().
+			Uint("transaction_id", debitTx.ID).
+			Uint("user_id", debitTx.UserID).
+			Msg("transfer created successfully (debit+credit)")
+		return debitTx, nil
+	}
+
+	// Non-transfer flow: a single transaction.
 	tx := domain.Transaction{
 		UserID:               input.UserID,
 		AccountID:            input.AccountID,
@@ -137,8 +183,8 @@ func (uc *CreateUseCase) Execute(ctx context.Context, input CreateInput) (domain
 		Amount:               input.Amount,
 		Description:          input.Description,
 		Date:                 date,
-		Month:                date.Format("2006-01"),
-		Status:               domain.TransactionStatusCompleted,
+		Month:                month,
+		Status:               status,
 		DestinationAccountID: destinationAccountID,
 	}
 

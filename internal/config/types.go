@@ -9,6 +9,22 @@ type Config struct {
 	JWT      JWTConfig      `mapstructure:"jwt" yaml:"jwt"`
 	Logger   LoggerConfig   `mapstructure:"logger" yaml:"logger"`
 	Admin    AdminConfig    `mapstructure:"admin" yaml:"admin"`
+	AI       AIConfig       `mapstructure:"ai" yaml:"ai"`
+}
+
+// AIConfig configuration for AI-assisted features (e.g., smart import)
+type AIConfig struct {
+	Enabled             bool    `mapstructure:"enabled" yaml:"enabled"`
+	Provider            string  `mapstructure:"provider" yaml:"provider"`
+	APIKey              string  `mapstructure:"api_key" yaml:"api_key"`
+	Model               string  `mapstructure:"model" yaml:"model"`
+	BaseURL             string  `mapstructure:"base_url" yaml:"base_url"`
+	TimeoutSeconds      int     `mapstructure:"timeout_seconds" yaml:"timeout_seconds"`
+	MaxItemsPerRequest  int     `mapstructure:"max_items_per_request" yaml:"max_items_per_request"`
+	MinConfidence       float64 `mapstructure:"min_confidence" yaml:"min_confidence"`
+	HistoryLookbackDays int     `mapstructure:"history_lookback_days" yaml:"history_lookback_days"`
+	HistoryMaxExamples  int     `mapstructure:"history_max_examples" yaml:"history_max_examples"`
+	RateLimitPerMinute  int     `mapstructure:"rate_limit_per_minute" yaml:"rate_limit_per_minute"`
 }
 
 // AppConfig application configuration

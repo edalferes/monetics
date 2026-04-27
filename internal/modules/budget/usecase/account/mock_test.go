@@ -1,4 +1,4 @@
-package category_test
+package account_test
 
 import (
 	"context"
@@ -9,50 +9,43 @@ import (
 	"github.com/edalferes/monetics/internal/modules/budget/domain"
 )
 
-type MockCategoryRepository struct {
+// MockAccountRepository is a mock implementation of AccountRepository
+type MockAccountRepository struct {
 	mock.Mock
 }
 
-func (m *MockCategoryRepository) Create(ctx context.Context, category domain.Category) (domain.Category, error) {
-	args := m.Called(ctx, category)
-	return args.Get(0).(domain.Category), args.Error(1)
+func (m *MockAccountRepository) Create(ctx context.Context, account domain.Account) (domain.Account, error) {
+	args := m.Called(ctx, account)
+	return args.Get(0).(domain.Account), args.Error(1)
 }
 
-func (m *MockCategoryRepository) GetByID(ctx context.Context, id uint) (domain.Category, error) {
+func (m *MockAccountRepository) GetByID(ctx context.Context, id uint) (domain.Account, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
-		return domain.Category{}, args.Error(1)
+		return domain.Account{}, args.Error(1)
 	}
-	return args.Get(0).(domain.Category), args.Error(1)
+	return args.Get(0).(domain.Account), args.Error(1)
 }
 
-func (m *MockCategoryRepository) GetByUserID(ctx context.Context, userID uint) ([]domain.Category, error) {
+func (m *MockAccountRepository) GetByUserID(ctx context.Context, userID uint) ([]domain.Account, error) {
 	args := m.Called(ctx, userID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).([]domain.Category), args.Error(1)
+	return args.Get(0).([]domain.Account), args.Error(1)
 }
 
-func (m *MockCategoryRepository) GetByType(ctx context.Context, userID uint, categoryType domain.CategoryType) ([]domain.Category, error) {
-	args := m.Called(ctx, userID, categoryType)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]domain.Category), args.Error(1)
+func (m *MockAccountRepository) Update(ctx context.Context, account domain.Account) (domain.Account, error) {
+	args := m.Called(ctx, account)
+	return args.Get(0).(domain.Account), args.Error(1)
 }
 
-func (m *MockCategoryRepository) Update(ctx context.Context, category domain.Category) (domain.Category, error) {
-	args := m.Called(ctx, category)
-	return args.Get(0).(domain.Category), args.Error(1)
-}
-
-func (m *MockCategoryRepository) Delete(ctx context.Context, id uint) error {
+func (m *MockAccountRepository) Delete(ctx context.Context, id uint) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
 }
 
-func (m *MockCategoryRepository) ExistsByID(ctx context.Context, id uint) (bool, error) {
+func (m *MockAccountRepository) ExistsByID(ctx context.Context, id uint) (bool, error) {
 	args := m.Called(ctx, id)
 	return args.Bool(0), args.Error(1)
 }
@@ -64,6 +57,11 @@ type MockTransactionRepository struct {
 func (m *MockTransactionRepository) Create(ctx context.Context, transaction domain.Transaction) (domain.Transaction, error) {
 	args := m.Called(ctx, transaction)
 	return args.Get(0).(domain.Transaction), args.Error(1)
+}
+
+func (m *MockTransactionRepository) CreateTransfer(ctx context.Context, debit, credit domain.Transaction) (domain.Transaction, domain.Transaction, error) {
+	args := m.Called(ctx, debit, credit)
+	return args.Get(0).(domain.Transaction), args.Get(1).(domain.Transaction), args.Error(2)
 }
 
 func (m *MockTransactionRepository) GetByID(ctx context.Context, id uint) (domain.Transaction, error) {
@@ -168,76 +166,7 @@ func (m *MockTransactionRepository) ExistsByID(ctx context.Context, id uint) (bo
 	return args.Bool(0), args.Error(1)
 }
 
-type MockBudgetRepository struct {
-	mock.Mock
-}
-
-func (m *MockBudgetRepository) Create(ctx context.Context, budget domain.Budget) (domain.Budget, error) {
-	args := m.Called(ctx, budget)
-	return args.Get(0).(domain.Budget), args.Error(1)
-}
-
-func (m *MockBudgetRepository) GetByID(ctx context.Context, id uint) (domain.Budget, error) {
+func (m *MockTransactionRepository) GetTransferPair(ctx context.Context, id uint) (domain.Transaction, bool, error) {
 	args := m.Called(ctx, id)
-	if args.Get(0) == nil {
-		return domain.Budget{}, args.Error(1)
-	}
-	return args.Get(0).(domain.Budget), args.Error(1)
-}
-
-func (m *MockBudgetRepository) GetByUserID(ctx context.Context, userID uint) ([]domain.Budget, error) {
-	args := m.Called(ctx, userID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]domain.Budget), args.Error(1)
-}
-
-func (m *MockBudgetRepository) GetByCategoryID(ctx context.Context, categoryID uint) ([]domain.Budget, error) {
-	args := m.Called(ctx, categoryID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]domain.Budget), args.Error(1)
-}
-
-func (m *MockBudgetRepository) GetActive(ctx context.Context, userID uint) ([]domain.Budget, error) {
-	args := m.Called(ctx, userID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]domain.Budget), args.Error(1)
-}
-
-func (m *MockBudgetRepository) GetOverlapping(ctx context.Context, userID uint, categoryID uint, startDate, endDate time.Time, excludeBudgetID *uint) ([]domain.Budget, error) {
-	args := m.Called(ctx, userID, categoryID, startDate, endDate, excludeBudgetID)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).([]domain.Budget), args.Error(1)
-}
-
-func (m *MockBudgetRepository) Update(ctx context.Context, budget domain.Budget) (domain.Budget, error) {
-	args := m.Called(ctx, budget)
-	return args.Get(0).(domain.Budget), args.Error(1)
-}
-
-func (m *MockBudgetRepository) Delete(ctx context.Context, id uint) error {
-	args := m.Called(ctx, id)
-	return args.Error(0)
-}
-
-func (m *MockBudgetRepository) ExistsByID(ctx context.Context, id uint) (bool, error) {
-	args := m.Called(ctx, id)
-	return args.Bool(0), args.Error(1)
-}
-
-func (m *MockBudgetRepository) UpdateSpent(ctx context.Context, budgetID uint, spent float64) error {
-	args := m.Called(ctx, budgetID, spent)
-	return args.Error(0)
-}
-
-func (m *MockBudgetRepository) UpdateSpentAtomic(ctx context.Context, budgetID uint, categoryID uint, startDate, endDate time.Time) error {
-	args := m.Called(ctx, budgetID, categoryID, startDate, endDate)
-	return args.Error(0)
+	return args.Get(0).(domain.Transaction), args.Bool(1), args.Error(2)
 }

@@ -50,8 +50,12 @@ func (uc *GetMonthlyReportUseCase) Execute(ctx context.Context, userID uint, yea
 	var totalIncome, totalExpense float64
 	categoryTotals := make(map[uint]CategoryTotal)
 
+	now := time.Now()
 	for _, tx := range transactions {
-		if tx.Status != domain.TransactionStatusCompleted {
+		// Skip cancelled transactions and entries whose date is still in the
+		// future. Status is derived from `date`: a future date is treated as
+		// pending and excluded from the report regardless of the stored value.
+		if tx.Status == domain.TransactionStatusCancelled || tx.Date.After(now) {
 			continue
 		}
 

@@ -44,7 +44,7 @@ func (h *AdminUserHandler) ListUsers(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": err.Error()})
 	}
-	return c.JSON(http.StatusOK, users)
+	return c.JSON(http.StatusOK, dto.ToUserResponseList(users))
 }
 
 // CreateUser godoc
@@ -102,7 +102,7 @@ func (h *AdminUserHandler) GetUser(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal error"})
 	}
 
-	return c.JSON(http.StatusOK, user)
+	return c.JSON(http.StatusOK, dto.ToUserResponse(*user))
 }
 
 // UpdateUser godoc
@@ -190,12 +190,12 @@ func (h *AdminUserHandler) AssignRoleToUser(c echo.Context) error {
 	}
 	userID := uint(id)
 
-	var req map[string]string
-	if err := c.Bind(&req); err != nil || req["role_name"] == "" {
+	var req dto.AssignRoleRequest
+	if err := c.Bind(&req); err != nil || req.RoleName == "" {
 		return c.JSON(http.StatusBadRequest, map[string]string{"error": "role_name is required"})
 	}
 
-	if err := h.AssignRoleUC.Execute(userID, req["role_name"]); err != nil {
+	if err := h.AssignRoleUC.Execute(userID, req.RoleName); err != nil {
 		if err == errors.ErrUserNotFound {
 			return c.JSON(http.StatusNotFound, map[string]string{"error": err.Error()})
 		}

@@ -3,7 +3,7 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/edalferes/monetics/internal/modules/auth/adapters/http/responses"
+	"github.com/edalferes/monetics/internal/modules/auth/adapters/http/dto"
 	"github.com/edalferes/monetics/internal/modules/auth/usecase/interfaces"
 	pkgresponses "github.com/edalferes/monetics/pkg/responses"
 	"github.com/labstack/echo/v4"
@@ -25,7 +25,7 @@ func NewAuditHandler(auditLogRepo interfaces.AuditLogRepository) *AuditHandler {
 // @Tags Audit
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {array} responses.AuditLogResponse
+// @Success 200 {array} dto.AuditLogResponse
 // @Failure 500 {object} pkgresponses.ErrorResponse
 // @Router /auth/audit-logs [get]
 func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
@@ -36,20 +36,5 @@ func (h *AuditHandler) ListAuditLogs(c echo.Context) error {
 		})
 	}
 
-	// Convert domain to response
-	response := make([]responses.AuditLogResponse, len(logs))
-	for i, log := range logs {
-		response[i] = responses.AuditLogResponse{
-			ID:        log.ID,
-			UserID:    log.UserID,
-			Username:  log.Username,
-			Action:    log.Action,
-			Status:    log.Status,
-			IP:        log.IP,
-			Details:   log.Details,
-			CreatedAt: log.CreatedAt,
-		}
-	}
-
-	return pkgresponses.OK(c, response)
+	return pkgresponses.OK(c, dto.ToAuditLogResponseList(logs))
 }
