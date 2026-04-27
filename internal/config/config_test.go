@@ -218,4 +218,116 @@ func TestValidatorValidate(t *testing.T) {
 			t.Fatalf("unexpected error: %v", err)
 		}
 	})
+
+	t.Run("ai disabled skips ai validation", func(t *testing.T) {
+		cfg := validConfigForValidation()
+		cfg.AI = AIConfig{Enabled: false}
+		if err := validator.Validate(cfg); err != nil {
+			t.Fatalf("Validate() unexpected error when AI disabled: %v", err)
+		}
+	})
+
+	t.Run("ai enabled requires api key", func(t *testing.T) {
+		cfg := validConfigForValidation()
+		cfg.AI = AIConfig{
+			Enabled:            true,
+			Provider:           "openai",
+			Model:              "gpt-4o-mini",
+			MaxItemsPerRequest: 500,
+			MinConfidence:      0.4,
+		}
+		err := validator.Validate(cfg)
+		if err == nil || err.Error() != "ai.api_key is required when ai.enabled is true" {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("ai enabled requires min_confidence in [0,1]", func(t *testing.T) {
+		cfg := validConfigForValidation()
+		cfg.AI = AIConfig{
+			Enabled:            true,
+			Provider:           "openai",
+			APIKey:             "sk-test",
+			Model:              "gpt-4o-mini",
+			MaxItemsPerRequest: 500,
+			MinConfidence:      1.5,
+		}
+		err := validator.Validate(cfg)
+		if err == nil || err.Error() != "ai.min_confidence must be between 0 and 1" {
+			t.Fatalf("unexpected error: %v", err)
+		}
+	})
+
+	t.Run("ai enabled valid config", func(t *testing.T) {
+		cfg := validConfigForValidation()
+		cfg.AI = AIConfig{
+			Enabled:            true,
+			Provider:           "openai",
+			APIKey:             "sk-test",
+			Model:              "gpt-4o-mini",
+			MaxItemsPerRequest: 500,
+			MinConfidence:      0.4,
+		}
+		if err := validator.Validate(cfg); err != nil {
+			t.Fatalf("Validate() unexpected error: %v", err)
+		}
+	})
+}
+
+func TestLoaderLoad_AIDefaults(t *testing.T) {
+	loader := NewLoader()
+	tempDir := t.TempDir()
+
+	cfg, err := loader.Load(LoadOptions{
+		ConfigPath: tempDir,
+		ConfigName: "missing",
+		ConfigType: "yaml",
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if cfg.AI.Enabled {
+		t.Fatalf("expected ai.enabled default false")
+	}
+	if cfg.AI.Provider != "openai" {
+		t.Fatalf("expected ai.provider default 'openai', got: %q", cfg.AI.Provider)
+	}
+	if cfg.AI.Model != "gpt-4o-mini" {
+		t.Fatalf("expected ai.model default 'gpt-4o-mini', got: %q", cfg.AI.Model)
+	}
+	if cfg.AI.MaxItemsPerRequest != 500 {
+		t.Fatalf("expected ai.max_items_per_request default 500, got: %d", cfg.AI.MaxItemsPerRequest)
+	}
+	if cfg.AI.MinConfidence != 0.4 {
+		t.Fatalf("expected ai.min_confidence default 0.4, got: %v", cfg.AI.MinConfidence)
+	}
+}
+
+func TestLoaderLoad_AIEnvOverrides(t *testing.T) {
+	loader := NewLoader()
+	tempDir := t.TempDir()
+
+	t.Setenv("AI_ENABLED", "true")
+	t.Setenv("AI_API_KEY", "sk-env-test")
+	t.Setenv("AI_MODEL", "gpt-4o")
+
+	cfg, err := loader.Load(LoadOptions{
+		ConfigPath: tempDir,
+		ConfigName: "missing",
+		ConfigType: "yaml",
+	})
+	if err != nil {
+		t.Fatalf("expected no error, got: %v", err)
+	}
+
+	if !cfg.AI.Enabled {
+		t.Fatalf("expected AI_ENABLED env to enable AI")
+	}
+	if cfg.AI.APIKey != "sk-env-test" {
+		t.Fatalf("expected AI_API_KEY override, got: %q", cfg.AI.APIKey)
+	}
+	if cfg.AI.Model != "gpt-4o" {
+		t.Fatalf("expected AI_MODEL override, got: %q", cfg.AI.Model)
+	}
 }

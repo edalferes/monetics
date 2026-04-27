@@ -173,6 +173,11 @@ func (m *MockTransactionRepository) ExistsByID(ctx context.Context, id uint) (bo
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockTransactionRepository) GetTransferPair(ctx context.Context, id uint) (domain.Transaction, bool, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(domain.Transaction), args.Bool(1), args.Error(2)
+}
+
 type MockBudgetRepository struct {
 	mock.Mock
 }

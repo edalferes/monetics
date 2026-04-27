@@ -6,6 +6,7 @@ import (
 
 	"github.com/edalferes/monetics/internal/config"
 	"github.com/edalferes/monetics/internal/modules/auth"
+	"github.com/edalferes/monetics/internal/modules/budget/adapters/ai"
 	"github.com/edalferes/monetics/internal/modules/budget/adapters/http/handlers"
 	"github.com/edalferes/monetics/internal/modules/budget/adapters/repository"
 	"github.com/edalferes/monetics/internal/modules/budget/usecase/account"
@@ -49,6 +50,7 @@ type Module struct {
 	updateTransactionUseCase  *transaction.UpdateUseCase
 	deleteTransactionUseCase  *transaction.DeleteUseCase
 	importCSVUseCase          *transaction.ImportCSVUseCase
+	suggestCategoriesUseCase  *transaction.SuggestCategoriesUseCase
 
 	// Use cases - Budget
 	createBudgetUseCase  *budget.CreateUseCase
@@ -67,6 +69,7 @@ type Module struct {
 	transactionHandler *handlers.TransactionHandler
 	budgetHandler      *handlers.BudgetHandler
 	reportHandler      *handlers.ReportHandler
+	featuresHandler    *handlers.FeaturesHandler
 }
 
 // NewModule creates a new budget module instance using the standard
@@ -123,6 +126,19 @@ func NewModule(db *gorm.DB, cfg *config.Config, log logger.Logger) *Module {
 		log,
 	)
 
+	// AI-assisted suggestion (optional, gated by cfg.AI.Enabled)
+	if cfg.AI.Enabled {
+		var aiClient ai.Client = ai.NewOpenAIClient(cfg.AI, log)
+		module.suggestCategoriesUseCase = transaction.NewSuggestCategoriesUseCase(
+			aiClient,
+			module.accountRepo,
+			module.categoryRepo,
+			module.transactionRepo,
+			cfg.AI,
+			log,
+		)
+	}
+
 	// Initialize use cases - Budget
 	module.createBudgetUseCase = budget.NewCreateUseCase(
 		module.budgetRepo,
@@ -168,6 +184,7 @@ func NewModule(db *gorm.DB, cfg *config.Config, log logger.Logger) *Module {
 		module.updateTransactionUseCase,
 		module.deleteTransactionUseCase,
 		module.importCSVUseCase,
+		module.suggestCategoriesUseCase,
 	)
 	module.budgetHandler = handlers.NewBudgetHandler(
 		module.createBudgetUseCase,
@@ -179,6 +196,7 @@ func NewModule(db *gorm.DB, cfg *config.Config, log logger.Logger) *Module {
 	module.reportHandler = handlers.NewReportHandler(
 		module.getMonthlyReportUseCase,
 	)
+	module.featuresHandler = handlers.NewFeaturesHandler(cfg.AI.Enabled)
 
 	return module
 }
@@ -209,6 +227,7 @@ func (m *Module) RegisterRoutes(api *echo.Group, authMiddleware echo.MiddlewareF
 	transactions := budget.Group("/transactions")
 	transactions.POST("", m.transactionHandler.CreateTransaction)
 	transactions.POST("/import", m.transactionHandler.ImportCSV)
+	transactions.POST("/import/ai-suggest", m.transactionHandler.SuggestCategories)
 	transactions.GET("", m.transactionHandler.ListTransactions)
 	transactions.GET("/:id", m.transactionHandler.GetTransactionByID)
 	transactions.PUT("/:id", m.transactionHandler.UpdateTransaction)
@@ -225,6 +244,11 @@ func (m *Module) RegisterRoutes(api *echo.Group, authMiddleware echo.MiddlewareF
 	// Report routes
 	reports := budget.Group("/reports")
 	reports.GET("/monthly", m.reportHandler.GetMonthlyReport)
+
+	// Config / feature flags (auth-protected so only logged users see it)
+	configGroup := api.Group("/config")
+	configGroup.Use(authMiddleware)
+	configGroup.GET("/features", m.featuresHandler.GetFeatures)
 }
 
 // WireUp initializes and registers the budget module.

@@ -21,6 +21,7 @@ func Seed(db *gorm.DB, userID uint) error {
 		{UserID: userID, Name: "Investimentos", Type: domain.CategoryTypeIncome, Icon: "TrendingUp", Color: "#FF9800"},
 		{UserID: userID, Name: "Premiações", Type: domain.CategoryTypeIncome, Icon: "Gift", Color: "#FFC107"},
 		{UserID: userID, Name: "Outras Fontes", Type: domain.CategoryTypeIncome, Icon: "Banknote", Color: "#8BC34A"},
+		{UserID: userID, Name: "Outros", Type: domain.CategoryTypeIncome, Icon: "Wallet", Color: "#6366F1"},
 	}
 
 	// Default expense categories based on the spreadsheet

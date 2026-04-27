@@ -185,6 +185,33 @@ func (r *TransactionRepository) ExistsByID(ctx context.Context, id uint) (bool, 
 	return count > 0, err
 }
 
+// GetTransferPair returns the other leg of a transfer pair.
+// The pair is linked by parent_id (credit.parent_id = debit.id).
+func (r *TransactionRepository) GetTransferPair(ctx context.Context, id uint) (domain.Transaction, bool, error) {
+	var current model.TransactionModel
+	if err := r.db.WithContext(ctx).First(&current, id).Error; err != nil {
+		return domain.Transaction{}, false, err
+	}
+
+	var pair model.TransactionModel
+	var query *gorm.DB
+	if current.ParentID != nil {
+		// current is the credit row; the debit is its parent
+		query = r.db.WithContext(ctx).Where("id = ?", *current.ParentID)
+	} else {
+		// current is (or was) the debit row; the credit is the row whose parent_id == id
+		query = r.db.WithContext(ctx).Where("parent_id = ?", id)
+	}
+
+	if err := query.First(&pair).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return domain.Transaction{}, false, nil
+		}
+		return domain.Transaction{}, false, err
+	}
+	return pair.ToDomain(), true, nil
+}
+
 func (r *TransactionRepository) GetByUserIDPaginatedWithFilters(ctx context.Context, userID uint, limit, offset int, startDate, endDate *time.Time) ([]domain.Transaction, error) {
 	query := r.preload(ctx).Where("user_id = ?", userID)
 	if startDate != nil {

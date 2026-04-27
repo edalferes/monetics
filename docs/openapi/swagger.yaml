@@ -1,35 +1,5 @@
 definitions:
-  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.ChangePasswordDTO:
-    properties:
-      current_password:
-        type: string
-      new_password:
-        type: string
-    required:
-    - current_password
-    - new_password
-    type: object
-  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.LoginDTO:
-    properties:
-      password:
-        type: string
-      username:
-        type: string
-    required:
-    - password
-    - username
-    type: object
-  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.RegisterDTO:
-    properties:
-      password:
-        type: string
-      username:
-        type: string
-    required:
-    - password
-    - username
-    type: object
-  github_com_edalferes_monetics_internal_modules_auth_adapters_http_responses.AuditLogResponse:
+  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.AuditLogResponse:
     properties:
       action:
         type: string
@@ -47,6 +17,77 @@ definitions:
         type: integer
       username:
         type: string
+    type: object
+  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.ChangePasswordDTO:
+    properties:
+      current_password:
+        type: string
+      new_password:
+        type: string
+    required:
+    - current_password
+    - new_password
+    type: object
+  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.CreatePermissionRequest:
+    properties:
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.CreateRoleRequest:
+    properties:
+      name:
+        type: string
+      permission_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - name
+    type: object
+  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.LoginDTO:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.MessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.PermissionResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.RegisterDTO:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.RoleResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.PermissionResponse'
+        type: array
     type: object
   github_com_edalferes_monetics_internal_modules_auth_domain.Permission:
     properties:
@@ -70,12 +111,34 @@ definitions:
     properties:
       id:
         type: integer
+      password:
+        type: string
       roles:
         items:
           $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_auth_domain.Role'
         type: array
       username:
         type: string
+    type: object
+  github_com_edalferes_monetics_internal_modules_budget_adapters_ai.CategorySuggestion:
+    properties:
+      category_id:
+        type: integer
+      confidence:
+        type: number
+      reason:
+        type: string
+      row_index:
+        type: integer
+    type: object
+  github_com_edalferes_monetics_internal_modules_budget_adapters_ai.Usage:
+    properties:
+      completion_tokens:
+        type: integer
+      estimated_cost_usd:
+        type: number
+      prompt_tokens:
+        type: integer
     type: object
   github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.AccountBalanceResponse:
     properties:
@@ -218,15 +281,13 @@ definitions:
         type: string
       description:
         type: string
-      initial_balance:
-        type: number
       name:
         type: string
       type:
         enum:
         - checking
         - savings
-        - credit
+        - credit_card
         - cash
         - investment
         type: string
@@ -250,6 +311,8 @@ definitions:
         type: string
       period:
         enum:
+        - daily
+        - weekly
         - monthly
         - quarterly
         - yearly
@@ -327,6 +390,55 @@ definitions:
     - date
     - type
     type: object
+  github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.FeaturesResponse:
+    properties:
+      ai_import:
+        type: boolean
+    type: object
+  github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionItem:
+    properties:
+      amount:
+        type: number
+      category_id:
+        type: integer
+      date:
+        type: string
+      description:
+        type: string
+      type:
+        enum:
+        - expense
+        - income
+        - transfer
+        type: string
+    required:
+    - amount
+    - category_id
+    - date
+    - description
+    type: object
+  github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionsRequest:
+    properties:
+      account_id:
+        type: integer
+      transactions:
+        items:
+          $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionItem'
+        minItems: 1
+        type: array
+    required:
+    - account_id
+    - transactions
+    type: object
+  github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionsResponse:
+    properties:
+      errors:
+        items:
+          $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_budget_usecase_transaction.ImportError'
+        type: array
+      imported:
+        type: integer
+    type: object
   github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.MonthlyReportResponse:
     properties:
       balance:
@@ -356,6 +468,47 @@ definitions:
         type: integer
       total_pages:
         type: integer
+    type: object
+  github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesItem:
+    properties:
+      amount:
+        type: number
+      date:
+        type: string
+      description:
+        type: string
+      type:
+        enum:
+        - expense
+        - income
+        - transfer
+        type: string
+    required:
+    - amount
+    - date
+    - description
+    type: object
+  github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesRequest:
+    properties:
+      account_id:
+        type: integer
+      items:
+        items:
+          $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesItem'
+        minItems: 1
+        type: array
+    required:
+    - account_id
+    - items
+    type: object
+  github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesResponse:
+    properties:
+      suggestions:
+        items:
+          $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_ai.CategorySuggestion'
+        type: array
+      usage:
+        $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_ai.Usage'
     type: object
   github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.TransactionListResponse:
     properties:
@@ -430,9 +583,9 @@ definitions:
         enum:
         - checking
         - savings
-        - credit
+        - credit_card
         - cash
-        - invest
+        - investment
         type: string
     type: object
   github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.UpdateBudgetRequest:
@@ -454,6 +607,8 @@ definitions:
         type: string
       period:
         enum:
+        - daily
+        - weekly
         - monthly
         - quarterly
         - yearly
@@ -502,6 +657,13 @@ definitions:
         - expense
         - transfer
         type: string
+    type: object
+  github_com_edalferes_monetics_internal_modules_budget_usecase_transaction.ImportError:
+    properties:
+      message:
+        type: string
+      row:
+        type: integer
     type: object
   github_com_edalferes_monetics_pkg_responses.ErrorResponse:
     properties:
@@ -691,7 +853,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_responses.AuditLogResponse'
+              $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.AuditLogResponse'
             type: array
         "500":
           description: Internal Server Error
@@ -966,6 +1128,18 @@ paths:
       summary: Update a category
       tags:
       - Budget - Categories
+  /config/features:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.FeaturesResponse'
+      summary: Get enabled feature flags
+      tags:
+      - Config
   /reports/monthly:
     get:
       parameters:
@@ -1005,11 +1179,23 @@ paths:
         in: query
         name: page_size
         type: integer
-      - description: Start date filter (RFC3339 format, e.g., 2025-02-01T00:00:00Z)
+      - description: Transaction type filter (income, expense, transfer)
+        in: query
+        name: type
+        type: string
+      - description: Account ID filter
+        in: query
+        name: account_id
+        type: integer
+      - description: Category ID filter
+        in: query
+        name: category_id
+        type: integer
+      - description: Start date filter (RFC3339 or YYYY-MM-DD format)
         in: query
         name: start_date
         type: string
-      - description: End date filter (RFC3339 format, e.g., 2025-02-28T23:59:59Z)
+      - description: End date filter (RFC3339 or YYYY-MM-DD format)
         in: query
         name: end_date
         type: string
@@ -1136,6 +1322,68 @@ paths:
       summary: Update a transaction
       tags:
       - Budget - Transactions
+  /transactions/import:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Bulk import request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.ImportTransactionsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Import transactions from CSV
+      tags:
+      - Budget - Transactions
+  /transactions/import/ai-suggest:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Suggestion request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_budget_adapters_http_dto.SuggestCategoriesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+        "502":
+          description: Bad Gateway
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Suggest categories for transactions using AI
+      tags:
+      - Budget - Transactions
   /v1/admin/permissions:
     get:
       responses:
@@ -1143,8 +1391,7 @@ paths:
           description: OK
           schema:
             items:
-              additionalProperties: true
-              type: object
+              $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.PermissionResponse'
             type: array
       security:
       - BearerAuth: []
@@ -1153,21 +1400,17 @@ paths:
       - Auth - Admin
     post:
       parameters:
-      - description: Permission name
+      - description: Permission payload
         in: body
         name: permission
         required: true
         schema:
-          additionalProperties:
-            type: string
-          type: object
+          $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.CreatePermissionRequest'
       responses:
         "201":
           description: Created
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.MessageResponse'
       security:
       - BearerAuth: []
       summary: Create a new permission
@@ -1184,10 +1427,6 @@ paths:
       responses:
         "204":
           description: No Content
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       security:
       - BearerAuth: []
       summary: Delete a permission
@@ -1200,8 +1439,7 @@ paths:
           description: OK
           schema:
             items:
-              additionalProperties: true
-              type: object
+              $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.RoleResponse'
             type: array
       security:
       - BearerAuth: []
@@ -1210,21 +1448,17 @@ paths:
       - Auth - Admin
     post:
       parameters:
-      - description: Role name
+      - description: Role payload
         in: body
         name: role
         required: true
         schema:
-          additionalProperties:
-            type: string
-          type: object
+          $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.CreateRoleRequest'
       responses:
         "201":
           description: Created
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/github_com_edalferes_monetics_internal_modules_auth_adapters_http_dto.MessageResponse'
       security:
       - BearerAuth: []
       summary: Create a new role
@@ -1241,10 +1475,6 @@ paths:
       responses:
         "204":
           description: No Content
-          schema:
-            additionalProperties:
-              type: string
-            type: object
       security:
       - BearerAuth: []
       summary: Delete a role
@@ -1555,32 +1785,6 @@ paths:
       summary: User login
       tags:
       - Auth - Login
-  /v1/test/protected:
-    get:
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "401":
-          description: Unauthorized
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-        "403":
-          description: Forbidden
-          schema:
-            additionalProperties:
-              type: string
-            type: object
-      security:
-      - BearerAuth: []
-      summary: Protected endpoint for testing roles/permissions
-      tags:
-      - testmodule
   /v1/user/password:
     put:
       consumes:

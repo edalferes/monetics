@@ -29,4 +29,10 @@ type TransactionRepository interface {
 	Update(ctx context.Context, transaction domain.Transaction) (domain.Transaction, error)
 	Delete(ctx context.Context, id uint) error
 	ExistsByID(ctx context.Context, id uint) (bool, error)
+	// GetTransferPair returns the paired row of a transfer transaction.
+	// If the input is the debit row (ParentID == nil) it returns the credit row
+	// (the row whose ParentID == id). If it is the credit row (ParentID != nil)
+	// it returns the debit row (the row with id == *ParentID).
+	// Returns (zero, false, nil) when no pair exists; (zero, false, err) on error.
+	GetTransferPair(ctx context.Context, id uint) (domain.Transaction, bool, error)
 }

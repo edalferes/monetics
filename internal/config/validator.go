@@ -55,5 +55,24 @@ func (v *Validator) Validate(config *Config) error {
 		return fmt.Errorf("jwt.secret is required")
 	}
 
+	// Validate AI (only when enabled)
+	if config.AI.Enabled {
+		if strings.TrimSpace(config.AI.APIKey) == "" {
+			return fmt.Errorf("ai.api_key is required when ai.enabled is true")
+		}
+		if strings.TrimSpace(config.AI.Provider) == "" {
+			return fmt.Errorf("ai.provider is required when ai.enabled is true")
+		}
+		if strings.TrimSpace(config.AI.Model) == "" {
+			return fmt.Errorf("ai.model is required when ai.enabled is true")
+		}
+		if config.AI.MaxItemsPerRequest <= 0 {
+			return fmt.Errorf("ai.max_items_per_request must be > 0")
+		}
+		if config.AI.MinConfidence < 0 || config.AI.MinConfidence > 1 {
+			return fmt.Errorf("ai.min_confidence must be between 0 and 1")
+		}
+	}
+
 	return nil
 }

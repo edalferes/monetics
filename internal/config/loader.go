@@ -111,4 +111,17 @@ func (l *Loader) setDefaults() {
 	// Admin user defaults
 	l.viper.SetDefault("admin.username", "admin")
 	l.viper.SetDefault("admin.password", "root123")
+
+	// AI defaults (disabled by default)
+	l.viper.SetDefault("ai.enabled", false)
+	l.viper.SetDefault("ai.provider", "openai")
+	l.viper.SetDefault("ai.api_key", "")
+	l.viper.SetDefault("ai.model", "gpt-4o-mini")
+	l.viper.SetDefault("ai.base_url", "https://api.openai.com/v1")
+	l.viper.SetDefault("ai.timeout_seconds", 60)
+	l.viper.SetDefault("ai.max_items_per_request", 500)
+	l.viper.SetDefault("ai.min_confidence", 0.4)
+	l.viper.SetDefault("ai.history_lookback_days", 90)
+	l.viper.SetDefault("ai.history_max_examples", 20)
+	l.viper.SetDefault("ai.rate_limit_per_minute", 10)
 }

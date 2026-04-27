@@ -86,6 +86,11 @@ func (m *MockTransactionRepository) ExistsByID(ctx context.Context, id uint) (bo
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *MockTransactionRepository) GetTransferPair(ctx context.Context, id uint) (domain.Transaction, bool, error) {
+	args := m.Called(ctx, id)
+	return args.Get(0).(domain.Transaction), args.Bool(1), args.Error(2)
+}
+
 func (m *MockTransactionRepository) GetByUserIDPaginated(ctx context.Context, userID uint, limit, offset int) ([]domain.Transaction, error) {
 	args := m.Called(ctx, userID, limit, offset)
 	if args.Get(0) == nil {

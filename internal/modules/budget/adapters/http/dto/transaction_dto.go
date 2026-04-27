@@ -160,10 +160,11 @@ func ToTransactionListResponse(result TransactionListOutput) TransactionListResp
 
 // UpdateTransactionRequest represents the request to update a transaction
 type UpdateTransactionRequest struct {
-	AccountID   *uint      `json:"account_id"`
-	CategoryID  *uint      `json:"category_id"`
-	Type        *string    `json:"type" validate:"omitempty,oneof=income expense transfer"`
-	Amount      *float64   `json:"amount" validate:"omitempty,gt=0"`
-	Description *string    `json:"description" validate:"omitempty,max=500"`
-	Date        *time.Time `json:"date"`
+	AccountID            *uint      `json:"account_id"`
+	CategoryID           *uint      `json:"category_id"`
+	Type                 *string    `json:"type" validate:"omitempty,oneof=income expense transfer"`
+	Amount               *float64   `json:"amount" validate:"omitempty,gt=0"`
+	Description          *string    `json:"description" validate:"omitempty,max=500"`
+	Date                 *time.Time `json:"date"`
+	DestinationAccountID *uint      `json:"destination_account_id"`
 }

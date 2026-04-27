@@ -31,6 +31,7 @@ type TransactionHandler struct {
 	updateTransactionUseCase  *transaction.UpdateUseCase
 	deleteTransactionUseCase  *transaction.DeleteUseCase
 	importCSVUseCase          *transaction.ImportCSVUseCase
+	suggestCategoriesUseCase  *transaction.SuggestCategoriesUseCase
 }
 
 // NewTransactionHandler creates a new transaction handler
@@ -41,6 +42,7 @@ func NewTransactionHandler(
 	updateTransactionUseCase *transaction.UpdateUseCase,
 	deleteTransactionUseCase *transaction.DeleteUseCase,
 	importCSVUseCase *transaction.ImportCSVUseCase,
+	suggestCategoriesUseCase *transaction.SuggestCategoriesUseCase,
 ) *TransactionHandler {
 	return &TransactionHandler{
 		createTransactionUseCase:  createTransactionUseCase,
@@ -49,6 +51,7 @@ func NewTransactionHandler(
 		updateTransactionUseCase:  updateTransactionUseCase,
 		deleteTransactionUseCase:  deleteTransactionUseCase,
 		importCSVUseCase:          importCSVUseCase,
+		suggestCategoriesUseCase:  suggestCategoriesUseCase,
 	}
 }
 
@@ -280,14 +283,15 @@ func (h *TransactionHandler) UpdateTransaction(c echo.Context) error {
 	}
 
 	input := transaction.UpdateInput{
-		ID:          uint(transactionID),
-		UserID:      userID,
-		AccountID:   req.AccountID,
-		CategoryID:  req.CategoryID,
-		Type:        convertTransactionType(req.Type),
-		Amount:      req.Amount,
-		Description: req.Description,
-		Date:        dateStr,
+		ID:                   uint(transactionID),
+		UserID:               userID,
+		AccountID:            req.AccountID,
+		CategoryID:           req.CategoryID,
+		Type:                 convertTransactionType(req.Type),
+		Amount:               req.Amount,
+		Description:          req.Description,
+		Date:                 dateStr,
+		DestinationAccountID: req.DestinationAccountID,
 	}
 
 	tx, err := h.updateTransactionUseCase.Execute(c.Request().Context(), input)
@@ -389,4 +393,59 @@ func (h *TransactionHandler) ImportCSV(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, dto.ToImportTransactionsResponse(result))
+}
+
+// SuggestCategories returns AI-suggested categories for a list of transaction rows.
+// @Summary Suggest categories for transactions using AI
+// @Tags Budget - Transactions
+// @Accept json
+// @Produce json
+// @Param request body dto.SuggestCategoriesRequest true "Suggestion request"
+// @Success 200 {object} dto.SuggestCategoriesResponse
+// @Failure 400 {object} map[string]interface{}
+// @Failure 403 {object} map[string]interface{}
+// @Failure 502 {object} map[string]interface{}
+// @Router /transactions/import/ai-suggest [post]
+func (h *TransactionHandler) SuggestCategories(c echo.Context) error {
+	if h.suggestCategoriesUseCase == nil {
+		return c.JSON(http.StatusForbidden, map[string]interface{}{
+			"error": "AI suggestions are not enabled",
+		})
+	}
+
+	var req dto.SuggestCategoriesRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": "Invalid request body",
+		})
+	}
+	if err := c.Validate(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+
+	userID, err := GetUserIDFromContext(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+
+	out, err := h.suggestCategoriesUseCase.Execute(c.Request().Context(), transaction.SuggestCategoriesInput{
+		UserID:    userID,
+		AccountID: req.AccountID,
+		Items:     dto.ToSuggestCategoriesItems(req.Items),
+	})
+	if err != nil {
+		status := errorToHTTPStatus(err)
+		if status == http.StatusInternalServerError {
+			status = http.StatusBadGateway
+		}
+		return c.JSON(status, map[string]interface{}{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, dto.ToSuggestCategoriesResponse(out))
 }
