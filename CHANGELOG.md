@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.24.0](https://github.com/edalferes/monetics/compare/v0.23.0...v0.24.0) (2026-04-27)
+
+
+### Features
+
+* refactor api ([88aa9bd](https://github.com/edalferes/monetics/commit/88aa9bd6ffaeacb7322ecc48de2d0a550142821c))
+* update ([205fdf0](https://github.com/edalferes/monetics/commit/205fdf0b6744ded2e334ab389976cdca60df2219))
+* update export ([41ffd8b](https://github.com/edalferes/monetics/commit/41ffd8bf28fff2bcdb2adab7e412b0d3f6a0edd8))
+
 ## [0.23.0](https://github.com/edalferes/monetics/compare/v0.22.0...v0.23.0) (2026-04-25)
 
 
